@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '../../db/supabase.client';
-import type { SymptomDto } from '../../types';
+import type { SymptomDetailsDto, SymptomDto, UpdateSymptomCommand } from '../../types';
 import type { getSymptomsQuerySchema } from './symptoms.validators';
 import type { z } from 'zod';
 
@@ -53,5 +53,33 @@ export class SymptomService {
 		}
 
 		return { data, count };
+	}
+
+	async updateSymptom(
+		symptomId: number,
+		userId: string,
+		symptomData: UpdateSymptomCommand
+	): Promise<SymptomDetailsDto | null> {
+		const { data, error } = await this.supabase
+			.from('symptoms')
+			.update(symptomData)
+			.eq('id', symptomId)
+			.eq('user_id', userId)
+			.select()
+			.single();
+
+		if (error) {
+			// In a real application, you'd want to log this error.
+			console.error('Error updating symptom:', error);
+			// Consider more specific error handling based on Supabase error codes
+			if (error.code === 'PGRST116') {
+				// This code means exactly one row was expected, but 0 or more were found.
+				// In our case, it means the symptom was not found for the given user.
+				return null;
+			}
+			throw new Error('Could not update the symptom. Please try again later.');
+		}
+
+		return data;
 	}
 }

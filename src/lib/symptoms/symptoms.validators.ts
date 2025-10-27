@@ -10,3 +10,15 @@ export const getSymptomsQuerySchema = z.object({
 });
 
 export type GetSymptomsQuery = z.infer<typeof getSymptomsQuerySchema>;
+
+export const updateSymptomCommandSchema = z
+	.object({
+		occurred_at: z.string().datetime({ offset: true }).optional(),
+		symptom_type: z.enum(['tingle', 'numbness', 'cramps', 'fuckedup']).optional(),
+		body_part: z.enum(['head', 'neck', 'back', 'arms', 'hands', 'legs']).optional(),
+		notes: z.string().nullable().optional(),
+	})
+	.refine(
+		(data) => Object.keys(data).length > 0,
+		'At least one field must be provided for update'
+	);
