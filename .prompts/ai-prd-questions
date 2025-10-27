@@ -1,0 +1,217 @@
+## 1 tura
+
+1. Jakie konkretne atrybuty powinien posiadać "symptom"? Czy oprócz nazwy powinniśmy zapisywać np. datę, godzinę, intensywność, czas trwania, czy może dodatkowe notatki?
+
+Rekomendacja: Proponuję, aby w MVP każdy symptom zawierał co najmniej datę, nazwę, skalę intensywności (np. 1-10) oraz opcjonalne pole na notatki. Umożliwi to zbieranie bardziej wartościowych danych od samego początku.
+
+2. W opisie problemu wspomniano o "wizualizacji" symptomów, jednak nie ma jej w zakresie MVP. Czy planujemy prostą wizualizację (np. wykres liniowy intensywności w czasie) już w pierwszej wersji produktu?
+
+Rekomendacja: Zalecam dodanie do MVP bardzo prostej formy wizualizacji, np. kalendarza z oznaczonymi dniami wystąpienia symptomów. To znacząco podniesie wartość dla użytkownika, realizując kluczowy cel projektu od samego początku.
+
+3. Kim jest docelowy użytkownik aplikacji? Czy jest to pacjent, opiekun pacjenta, czy może lekarz?
+
+Rekomendacja: Sugeruję, aby w MVP skupić się wyłącznie na potrzebach pacjenta. Uprości to projekt interfejsu i pozwoli na szybsze dostarczenie wartości dla głównej grupy odbiorców.
+
+4. Jak zdefiniowana jest "lista ostatnich symptomów"? Czy chodzi o określoną liczbę (np. 10 ostatnich), symptomy z ostatniego tygodnia/miesiąca, czy lista powinna być w jakiś sposób filtrowana lub sortowana?
+
+Rekomendacja: W MVP proponuję wyświetlanie symptomów z ostatnich 30 dni, posortowanych chronologicznie od najnowszego. To prosty w implementacji i czytelny dla użytkownika punkt wyjścia.
+
+5. W jaki sposób planujemy zarządzać danymi użytkowników? Czy w MVP przewidujemy system kont (rejestracja/logowanie), aby zapewnić prywatność i ciągłość danych?
+
+Rekomendacja: Ze względu na wrażliwość danych medycznych, zalecam wprowadzenie prostego systemu uwierzytelniania (np. logowanie przez e-mail/hasło) już w MVP. Zapewni to bezpieczeństwo i umożliwi użytkownikom dostęp do danych z różnych urządzeń.
+
+6. Jakie kluczowe wskaźniki (KPI) zdefiniujemy, aby zmierzyć sukces MVP? Czy będzie to liczba zarejestrowanych użytkowników, dzienna liczba zapisywanych symptomów, a może wskaźnik retencji po pierwszym miesiącu?
+
+Rekomendacja: Sugeruję skupić się na dwóch metrykach: 1) tygodniowej liczbie aktywnych użytkowników (WAU) i 2) średniej liczbie symptomów dodawanych przez aktywnego użytkownika tygodniowo. Pokaże to zarówno zaangażowanie, jak i realne wykorzystanie kluczowej funkcji.
+
+7. Czy użytkownicy będą za każdym razem wpisywać nazwę symptomu ręcznie, czy przewidujemy predefiniowaną listę najczęstszych symptomów SM (np. zmęczenie, drętwienie) do szybkiego wyboru?
+
+Rekomendacja: Sugeruję dodanie możliwości tworzenia własnych, edytowalnych tagów/symptomów. Znacząco przyspieszy to proces dodawania wpisów i poprawi spójność danych bez narzucania z góry ustalonej listy.
+
+8. Czy planujemy jakikolwiek proces onboardingu dla nowych użytkowników, który wyjaśniłby, jak korzystać z aplikacji i jakie korzyści płyną z regularnego zapisywania symptomów?
+
+Rekomendacja: Proponuję stworzenie bardzo prostego, jednostronicowego wprowadzenia (splash screen) przy pierwszym uruchomieniu, które w 2-3 krokach pokaże główne funkcje. To minimalny wysiłek, który może znacznie poprawić pierwsze wrażenie i adopcję.
+
+9. W jaki sposób będziemy zbierać opinie od pierwszych użytkowników na temat MVP? Czy planujemy wbudowany formularz opinii, ankietę e-mailową, czy inny kanał komunikacji?
+
+Rekomendacja: Zalecam umieszczenie w aplikacji prostego, widocznego linku "Prześlij opinię", który kierowałby do darmowego narzędzia (np. Tally, Google Forms). To niskokosztowy sposób na zbieranie cennych informacji zwrotnych, kluczowych dla dalszego rozwoju.
+
+10. Edycja i usuwanie symptomów to kluczowe funkcje. Czy powinniśmy wprowadzić mechanizm potwierdzania tych operacji (np. modal "Czy na pewno chcesz usunąć?"), aby zapobiec przypadkowej utracie danych?
+
+Rekomendacja: Tak, zalecam wprowadzenie prostego okna dialogowego z potwierdzeniem, zwłaszcza dla operacji usuwania. Jest to standardowa praktyka UX, która minimalizuje ryzyko frustracji użytkownika związanej z przypadkową utratą ważnych danych.
+
+## 2 tura
+
+Jasne, oto kolejna seria pytań i zaleceń oparta na Twoich odpowiedziach:
+
+1. Jakie konkretne wartości powinny znaleźć się na listach wyboru (enum) dla "intensywności" i "części ciała"? Czy te listy mają być stałe, czy użytkownik powinien mieć możliwość dodawania własnych pozycji, np. nowej części ciała?
+
+Rekomendacja: Na start proponuję zdefiniować stałą, predefiniowaną listę dla obu. Dla intensywności może to być skala numeryczna (np. 1-5) lub opisowa (niska, średnia, wysoka). Dla części ciała warto przygotować listę najczęstszych lokalizacji (np. głowa, lewa ręka, brzuch). Możliwość personalizacji list można dodać w przyszłości.
+
+2. Wspomniałeś o "liście szybkiego wyboru" dla nazw symptomów. Jakie pozycje powinny się na niej znaleźć na początku? Czy użytkownik powinien mieć możliwość zarządzania tą listą (dodawania, edytowania, usuwania własnych, najczęstszych symptomów)?
+
+Rekomendacja: Stwórzmy domyślną listę 5-10 najczęstszych symptomów SM (np. zmęczenie, drętwienie, problemy z równowagą). Kluczowe dla personalizacji będzie jednak umożliwienie użytkownikowi zarządzania własną listą "szybkich wyborów" – to funkcja, którą warto uwzględnić już w MVP.
+
+3. Jak powinny współdziałać ze sobą filtry na liście symptomów? Jeśli użytkownik wybierze zakres dat ORAZ konkretną część ciała, czy system ma pokazać wyniki spełniające oba te warunki (logika AND), czy którykolwiek z nich (logika OR)?
+
+Rekomendacja: Zdecydowanie zalecam użycie logiki AND. Jest to bardziej intuicyjne dla użytkownika i pozwala na precyzyjne zawężanie wyników, co jest kluczowe przy analizie danych.
+
+4. W jaki sposób będziemy zarządzać edycją? Gdy użytkownik wybierze symptom z listy szybkiego wyboru (np. "Zmęczenie") i doda do niego notatki, czy tworzy nowy, niezależny wpis, czy modyfikuje główny element na liście?
+
+Rekomendacja: Lista szybkiego wyboru powinna działać jak szablon. Wybranie pozycji powinno tworzyć nowy, osobny rekord w bazie danych z przypisaną nazwą. Główna lista nazw symptomów powinna być zarządzana oddzielnie, aby zachować porządek i integralność danych.
+
+5. Planujesz użyć Supabase. Czy zamierzasz wykorzystać tylko bazę danych, czy również wbudowane usługi autentykacji (Supabase Auth) do obsługi logowania i rejestracji?
+
+Rekomendacja: Skorzystanie z Supabase Auth od samego początku, nawet przy lokalnym dewelopmencie, jest bardzo dobrym pomysłem. Zapewni to solidne i bezpieczne fundamenty pod zarządzanie użytkownikami, co znacznie uprości przejście na środowisko produkcyjne w przyszłości.
+
+6. Czy moglibyśmy wstępnie zdefiniować strukturę (schemat) danych dla pojedynczego rekordu symptomu? Na podstawie Twoich odpowiedzi, mogłoby to wyglądać tak: `id`, `user_id`, `created_at` (data i godzina), `symptom_name` (nazwa), `intensity_level` (poziom intensywności), `body_part` (część ciała), `notes` (notatki). Czy zgadzasz się z taką strukturą?
+
+Rekomendacja: Sformalizujmy tę strukturę. `symptom_name` może być zwykłym tekstem lub, co jest bardziej elastycznym rozwiązaniem, kluczem obcym do oddzielnej tabeli z listą symptomów zarządzaną przez użytkownika. Sugeruję to drugie rozwiązanie.
+
+7. Zrezygnowałeś z okien potwierdzających usunięcie danych. To rodzi ryzyko przypadkowej utraty ważnych informacji o zdrowiu, co może być bardzo frustrujące dla użytkownika. Czy jesteś pewien tej decyzji?
+
+Rekomendacja: Zdecydowanie rekomenduję ponowne rozważenie tej kwestii. Proste okno dialogowe typu "Czy na pewno chcesz usunąć?" to standardowa praktyka UX, która minimalizuje ryzyko przy niewielkim nakładzie pracy. Alternatywą może być tymczasowe powiadomienie "cofnij" (tzw. toast/snackbar) pojawiające się na kilka sekund po usunięciu.
+
+8. Które pola będzie można edytować w istniejącym wpisie symptomu? Czy użytkownik będzie mógł zmienić wszystkie informacje, włącznie z datą i godziną, czy tylko np. notatki i intensywność?
+
+Rekomendacja: W ramach MVP, umożliwienie edycji wszystkich pól w istniejącym rekordzie da użytkownikowi największą elastyczność i pozwoli na łatwe korygowanie ewentualnych pomyłek.
+
+9. Co użytkownik powinien zobaczyć na ekranie, gdy jeszcze nie dodał żadnych symptomów? A co w sytuacji, gdy zastosowane filtry nie zwrócą żadnych wyników?
+
+Rekomendacja: W pierwszym przypadku (stan pusty) warto wyświetlić przyjazną wiadomość powitalną z wyraźnym przyciskiem do działania (np. "Dodaj swój pierwszy symptom"). W drugim przypadku (brak wyników filtrowania) wystarczy prosty komunikat, np. "Nie znaleziono symptomów spełniających podane kryteria". To znacznie lepsze niż pusty ekran.
+
+10. Jakie powinny być domyślne ustawienia filtrowania na liście symptomów? Wspomniałeś o domyślnej wartości 10 dla "ilości ostatnich rekordów". Czy lista powinna być też domyślnie posortowana, np. od najnowszego wpisu?
+
+Rekomendacja: Tak, domyślny widok powinien pokazywać 10 ostatnich wpisów, posortowanych malejąco według daty dodania (od najnowszego do najstarszego). To zapewni użytkownikowi natychmiastowy wgląd w najświeższe dane bez konieczności interakcji.
+
+## 3 tura
+
+Doskonale, przechodzimy do kolejnej rundy uszczegóławiania. Oto następny zestaw pytań i zaleceń.
+
+1. W jaki sposób użytkownik ma dodawać lub edytować symptomy? Czy powinien pojawić się formularz w oknie dialogowym (modal), czy ma to być osobna strona/widok w aplikacji?
+
+Rekomendacja: Sugeruję użycie okna dialogowego (modala). Pozwoli to użytkownikowi na szybkie dodanie wpisu bez opuszczania widoku listy, co jest bardziej płynne i nowoczesne.
+
+2. W formularzu dodawania nowego symptomu, które pola są obowiązkowe? Czy `symptom_type` i `body_part` muszą być zawsze wybrane, a `notes` mogą pozostać puste?
+
+Rekomendacja: Zalecam, aby pola `symptom_type` oraz `body_part` były wymagane. Zapewni to spójność i kompletność danych, co jest kluczowe dla ich późniejszej analizy. Pole `notes` powinno być opcjonalne.
+
+3. Jakie konkretnie informacje o każdym symptomie powinny być widoczne od razu na liście? Czy wystarczy data, typ symptomu i część ciała, czy chcemy wyświetlać także fragment notatek?
+
+Rekomendacja: Na liście proponuję wyświetlać datę, typ symptomu i część ciała. Zapewnia to szybki przegląd najważniejszych informacji. Pełne dane, w tym notatki, powinny być dostępne po kliknięciu w dany element i przejściu do widoku szczegółów/edycji.
+
+4. Gdzie w interfejsie użytkownika powinny znajdować się opcje filtrowania? Czy mają być one zawsze widoczne nad listą, czy ukryte pod przyciskiem "Filtry", który rozwija dodatkowy panel?
+
+Rekomendacja: Proponuję umieścić filtry bezpośrednio nad listą, aby były od razu widoczne i łatwo dostępne. Ułatwi to użytkownikom odkrycie i korzystanie z tej kluczowej funkcjonalności.
+
+5. Jak ma wyglądać proces rejestracji i logowania? Czy wystarczy standardowe połączenie e-maila i hasła, czy może od razu dodać opcje logowania przez serwisy trzecie (np. Google), które ułatwia Supabase?
+
+Rekomendacja: Dla MVP w zupełności wystarczy klasyczna rejestracja i logowanie za pomocą adresu e-mail i hasła. Jest to najszybsze do wdrożenia. Integracje z innymi dostawcami można dodać w przyszłości jako udogodnienie.
+
+6. Jeden z typów symptomów to "FuckedUp". Czy jest to nazwa docelowa? Ma ona bardzo nieformalny charakter i może nie pasować do tonu aplikacji o tematyce zdrowotnej.
+
+Rekomendacja: Zalecam zmianę tej nazwy na bardziej neutralną, np. "Inne" ("Other") lub "Ogólne złe samopoczucie" ("General malaise"). Pozwoli to zachować bardziej profesjonalny i wspierający charakter produktu.
+
+7. Czy użytkownik powinien mieć możliwość całkowitego usunięcia swojego konta wraz ze wszystkimi zapisanymi danymi bezpośrednio z poziomu aplikacji?
+
+Rekomendacja: Tak, udostępnienie takiej opcji jest dobrą praktyką i często wymogiem prawnym (RODO). Sugeruję dodać prostą funkcję w ustawieniach konta, która po potwierdzeniu trwale usunie wszystkie dane użytkownika.
+
+8. W jaki sposób użytkownik będzie wprowadzał datę i godzinę (`created_at`) podczas dodawania symptomu? Czy system ma domyślnie ustawiać bieżący czas z możliwością jego zmiany?
+
+Rekomendacja: Zdecydowanie zalecam, aby pole daty i godziny domyślnie ustawiało się na aktualny czas. Należy jednak dać użytkownikowi prostą możliwość edycji tej wartości, aby mógł bez problemu rejestrować symptomy, które wystąpiły w przeszłości.
+
+9. Co użytkownik powinien zobaczyć, gdy jakaś operacja się nie powiedzie, np. z powodu braku połączenia z internetem podczas próby zapisu symptomu?
+
+Rekomendacja: W takiej sytuacji należy wyświetlić krótkie, zrozumiałe powiadomienie (tzw. "toast"), informujące o problemie, np. "Zapis nie powiódł się. Sprawdź połączenie z internetem". Należy unikać pokazywania technicznych komunikatów o błędach.
+
+10. Jak będzie wyglądać podstawowa nawigacja? Czy po zalogowaniu użytkownik od razu widzi listę symptomów? Gdzie umieścimy przycisk do wylogowania?
+
+Rekomendacja: Proponuję najprostszy możliwy układ: głównym ekranem po zalogowaniu jest lista symptomów. Przycisk do dodawania nowego wpisu powinien być dobrze widoczny (np. jako "pływający" przycisk "+"). Opcja wylogowania może znajdować się w prostym menu pod ikoną profilu użytkownika w rogu ekranu.
+
+## 4 tura
+
+Rozumiem. Kontynuujmy doprecyzowywanie wymagań. Oto kolejny zestaw pytań i zaleceń.
+
+1. W jaki sposób dokładnie mają działać filtry "typ symptomu" i "część ciała"? Czy mają to być listy rozwijane, z których można wybrać tylko jedną opcję, czy może listy z polami wyboru (checkbox), pozwalające na zaznaczenie wielu wartości jednocześnie (np. pokazać "Tingle" ORAZ "Numbness")?
+
+Rekomendacja: Na potrzeby MVP, najprostszym i najszybszym do wdrożenia rozwiązaniem będą dwie oddzielne listy rozwijane, z których każda pozwala na wybór tylko jednej wartości. Możliwość filtrowania po wielu wartościach jednocześnie można dodać w przyszłości.
+
+2. Jakiego komponentu UI użyjemy do filtrowania po zakresie dat? Czy mają to być dwa osobne pola do wpisania daty "Od" i "Do", czy jeden zintegrowany komponent kalendarza, w którym zaznacza się początek i koniec okresu?
+
+Rekomendacja: Użycie dwóch standardowych pól wyboru daty (`<input type="date">`) dla daty początkowej i końcowej jest rozwiązaniem uniwersalnym, zrozumiałym dla każdego i łatwym w implementacji.
+
+3. Co powinno się stać, gdy lista symptomów będzie bardzo długa? Czy wczytamy kolejne wpisy, gdy użytkownik przewinie listę na sam dół ("infinite scroll"), czy zastosujemy klasyczną paginację ze stronami (1, 2, 3...)?
+
+Rekomendacja: "Infinite scroll" zapewni nowocześniejsze i płynniejsze doświadczenie, zwłaszcza na urządzeniach mobilnych. Jest to obecnie preferowane rozwiązanie dla tego typu list i warto je zaimplementować w MVP.
+
+4. Mamy zdefiniowany schemat bazy danych. Jakie powinny być typy danych dla poszczególnych pól? Na przykład, czy `symptom_type` i `body_part` będą w bazie przechowywane jako tekst (`string`), czy jako `enum`?
+
+Rekomendacja: Zdecydowanie zalecam zdefiniowanie tych pól jako natywne typy `enum` w Supabase/PostgreSQL. Zapewni to integralność danych (nie będzie można wpisać wartości spoza zdefiniowanej listy) i jest bardziej wydajne niż przechowywanie pełnych ciągów znaków.
+
+5. Czy pole `notes` powinno mieć jakiś limit znaków? Czy użytkownik może tam wpisać dowolnie długi tekst?
+
+Rekomendacja: Wprowadźmy rozsądny limit, na przykład 1000 znaków. Zapobiegnie to potencjalnym problemom z wydajnością i obsługą bardzo dużych wpisów. W formularzu warto wyświetlać licznik pozostałych znaków.
+
+6. W jakim formacie będziemy wyświetlać datę (`created_at`) na liście symptomów? Czy ma być to format względny (np. "2 godziny temu"), czy dokładny (np. "27.10.2025, 14:30")?
+
+Rekomendacja: Biorąc pod uwagę medyczny charakter danych, precyzja jest kluczowa. Sugeruję użycie jednoznacznego formatu absolutnego, np. `DD.MM.RRRR HH:MM`.
+
+7. Jak aplikacja ma się zachowywać na małych ekranach (telefony komórkowe)? Czy filtry i lista mają po prostu ułożyć się jeden pod drugim?
+
+Rekomendacja: Tak, aplikacja musi być w pełni responsywna. Na urządzeniach mobilnych filtry powinny znaleźć się na górze ekranu, a pod nimi lista wpisów. Okno modalne do dodawania/edycji powinno zajmować cały ekran, aby zapewnić wygodę użytkowania.
+
+8. Co użytkownik powinien widzieć w momencie, gdy dane (np. lista symptomów) są wczytywane z bazy danych, co może chwilę potrwać przy wolniejszym połączeniu z internetem?
+
+Rekomendacja: Należy zapewnić wizualną informację zwrotną. Wyświetlanie prostego wskaźnika ładowania (tzw. "spinner") lub szkieletu interfejsu ("skeleton screen") jest standardową i dobrą praktyką, która informuje użytkownika, że aplikacja pracuje.
+
+9. Ustaliliśmy, że użytkownik może usunąć konto. Czy powinien mieć również możliwość zmiany swojego hasła z poziomu aplikacji?
+
+Rekomendacja: Tak, to podstawowa funkcja związana z bezpieczeństwem konta. Opcja "Zmień hasło" powinna znaleźć się w ustawieniach profilu użytkownika, obok opcji wylogowania i usunięcia konta.
+
+10. Jak poradzimy sobie z obsługą stref czasowych? Czy data i godzina dodania symptomu (`created_at`) powinna być zapisywana w uniwersalnym czasie UTC i konwertowana do lokalnej strefy czasowej użytkownika w momencie wyświetlania?
+
+Rekomendacja: Tak, to najlepsze podejście. Zapisywanie wszystkich dat w bazie danych w formacie UTC i konwertowanie ich na czas lokalny w przeglądarce użytkownika eliminuje wszelkie problemy i niejednoznaczności związane ze strefami czasowymi.
+
+## 5 tura
+
+Świetnie, doprecyzowaliśmy już bardzo wiele kluczowych aspektów. Jesteśmy blisko posiadania kompletnego zestawu wymagań dla MVP. Oto ostatnia, finałowa runda pytań, skupiająca się na detalach i przypadkach brzegowych.
+
+1. Jak system powinien zareagować na próbę przesłania formularza dodawania/edycji, jeśli wymagane pola (np. `symptom_type`) są puste? Gdzie i jaki komunikat o błędzie powinien się pojawić?
+
+Rekomendacja: Zalecam zastosowanie walidacji po stronie klienta. Przycisk "Zapisz" powinien być nieaktywny, dopóki wszystkie wymagane pola nie zostaną wypełnione. Dodatkowo, pod każdym niewypełnionym polem powinien pojawić się prosty komunikat, np. "To pole jest wymagane".
+
+2. Co się stanie, gdy użytkownik pomyślnie doda nowy symptom? Jakie otrzyma potwierdzenie?
+
+Rekomendacja: Po pomyślnym zapisie, okno modalne powinno się automatycznie zamknąć, a na ekranie na kilka sekund powinno pojawić się dyskretne powiadomienie (toast) z komunikatem "Symptom został zapisany". Lista w tle powinna się odświeżyć, pokazując nowy wpis na samej górze.
+
+3. Jak użytkownik może wyczyścić ustawione filtry i wrócić do widoku domyślnego?
+
+Rekomendacja: Warto dodać przycisk "Wyczyść filtry" obok kontrolek filtrowania. Jego kliknięcie powinno zresetować wszystkie filtry do stanu początkowego i odświeżyć listę.
+
+4. Czy w MVP potrzebujemy funkcjonalności "Zapomniałem hasła"? Jest to kluczowy element każdego systemu logowania.
+
+Rekomendacja: Zdecydowanie tak. Jest to niezbędna funkcja. Należy zaimplementować standardowy mechanizm resetowania hasła, który Supabase Auth w dużej mierze oferuje gotowy do użycia (wysyłka linku resetującego na e-mail).
+
+5. Ustaliliśmy, że do budowy UI użyjemy biblioteki Shadcn/ui. Czy wszystkie interaktywne elementy, takie jak modale, przyciski, listy rozwijane i powiadomienia, mają pochodzić z tej biblioteki?
+
+Rekomendacja: Tak, konsekwentne używanie jednej biblioteki komponentów, jak Shadcn/ui, zapewni spójność wizualną i funkcjonalną całej aplikacji, a także znacznie przyspieszy proces deweloperski.
+
+6. Czy po udanej rejestracji użytkownik ma być automatycznie logowany i przenoszony do głównego ekranu aplikacji, czy ma trafić na stronę logowania i zalogować się ręcznie?
+
+Rekomendacja: Automatyczne zalogowanie i przekierowanie do aplikacji zaraz po rejestracji to standard zapewniający najlepsze pierwsze wrażenie (user experience). Eliminuje to zbędny krok dla nowego użytkownika.
+
+7. Czy powinniśmy od samego początku zwracać uwagę na podstawowe zasady dostępności (accessibility, a11y), takie jak odpowiedni kontrast, etykiety dla pól formularzy i możliwość nawigacji za pomocą klawiatury?
+
+Rekomendacja: Tak. W aplikacji o tematyce zdrowotnej dbałość o dostępność jest szczególnie ważna. Wdrożenie podstawowych zasad WCAG od samego początku to niewielki koszt, który znacząco poszerza grono potencjalnych odbiorców.
+
+8. Jaki ton komunikacji przyjmujemy w aplikacji? Czy ma być bardzo formalny i kliniczny, czy raczej prosty, wspierający i empatyczny?
+
+Rekomendacja: Sugeruję ton wspierający i empatyczny. Komunikaty powinny być proste i zrozumiałe, budując zaufanie i poczucie bezpieczeństwa, co jest kluczowe w tego typu produkcie.
+
+9. Potwierdźmy proces edycji: czy kliknięcie "Edytuj" przy wpisie na liście otworzy ten sam formularz (modal), co przycisk "Dodaj", ale wypełniony danymi wybranego symptomu?
+
+Rekomendacja: Dokładnie tak. Wykorzystanie tego samego komponentu w trybie "edycji" i "dodawania" to efektywna i powszechna praktyka. Tytuł okna można dynamicznie zmieniać na "Edytuj symptom".
+
+10. Czy lista symptomów ma być sortowana tylko i wyłącznie od najnowszego do najstarszego, czy przewidujemy możliwość zmiany kierunku sortowania przez użytkownika?
+
+Rekomendacja: Dla MVP domyślne sortowanie od najnowszego jest w zupełności wystarczające i najbardziej intuicyjne. Opcję zmiany sortowania można dodać w przyszłości jako ulepszenie.
