@@ -15,9 +15,14 @@ const createSymptomSchema: z.ZodType<Omit<CreateSymptomCommand, 'occurred_at'> &
 });
 
 export const GET: APIRoute = async ({ request, locals }: APIContext) => {
-	const { session, supabase } = locals;
+	console.log('--- Nowe zapytanie GET do /api/symptoms ---');
+	console.log('Przychodzące nagłówki:', Object.fromEntries(request.headers.entries()));
 
-	if (!session?.user) {
+	const { user, supabase } = locals;
+	console.log('Użytkownik odczytany przez middleware:', user);
+
+	if (!user) {
+		console.log('Brak użytkownika. Odpowiedź: 401 Unauthorized.');
 		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
 			status: 401,
 			headers: { 'Content-Type': 'application/json' },
@@ -42,7 +47,7 @@ export const GET: APIRoute = async ({ request, locals }: APIContext) => {
 	try {
 		const { data, count } = await getSymptoms(
 			supabase,
-			session.user.id,
+			user.id,
 			validationResult.data,
 		);
 
@@ -65,9 +70,9 @@ export const GET: APIRoute = async ({ request, locals }: APIContext) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }: APIContext) => {
-	const { session, supabase } = locals;
+	const { user, supabase } = locals;
 
-	if (!session?.user) {
+	if (!user) {
 		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
 			status: 401,
 			headers: { 'Content-Type': 'application/json' },
@@ -99,7 +104,7 @@ export const POST: APIRoute = async ({ request, locals }: APIContext) => {
 	try {
 		const newSymptom = await createSymptom(
 			supabase,
-			session.user.id,
+			user.id,
 			validationResult.data,
 		);
 		return new Response(JSON.stringify(newSymptom), {

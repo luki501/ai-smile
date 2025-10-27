@@ -8,9 +8,9 @@ export const prerender = false;
 const idSchema = z.coerce.number().int().positive();
 
 export async function DELETE({ params, locals }: APIContext): Promise<Response> {
-	const { session, supabase } = locals;
+	const { user, supabase } = locals;
 
-	if (!session?.user) {
+	if (!user) {
 		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
 			status: 401,
 		});
@@ -26,7 +26,7 @@ export async function DELETE({ params, locals }: APIContext): Promise<Response> 
 
 	try {
 		const symptomService = new SymptomService(supabase);
-		await symptomService.deleteSymptom(validationResult.data, session.user.id);
+		await symptomService.deleteSymptom(validationResult.data, user.id);
 	} catch (error) {
 		if (error instanceof Error) {
 			if (error.message.includes('Symptom not found')) {
@@ -49,14 +49,13 @@ export async function PATCH({
 	request,
 	locals,
 }: APIContext): Promise<Response> {
-	const { session, supabase } = locals;
+	const { user, supabase } = locals;
 
-	if (!session?.user) {
+	if (!user) {
 		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
 			status: 401,
 		});
 	}
-	const { user } = session;
 
 	const symptomId = Number(params.id);
 
