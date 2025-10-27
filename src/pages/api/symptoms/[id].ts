@@ -5,6 +5,45 @@ import { z } from 'zod';
 
 export const prerender = false;
 
+const idSchema = z.coerce.number().int().positive();
+
+export async function DELETE({ params, locals }: APIContext): Promise<Response> {
+	const { session, supabase } = locals;
+
+	if (!session?.user) {
+		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
+			status: 401,
+		});
+	}
+
+	const validationResult = idSchema.safeParse(params.id);
+
+	if (!validationResult.success) {
+		return new Response(JSON.stringify({ errors: validationResult.error.flatten() }), {
+			status: 400,
+		});
+	}
+
+	try {
+		const symptomService = new SymptomService(supabase);
+		await symptomService.deleteSymptom(validationResult.data, session.user.id);
+	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message.includes('Symptom not found')) {
+				return new Response(JSON.stringify({ message: error.message }), {
+					status: 404,
+				});
+			}
+		}
+		console.error('Failed to delete symptom:', error);
+		return new Response(JSON.stringify({ message: 'Internal Server Error' }), {
+			status: 500,
+		});
+	}
+
+	return new Response(null, { status: 204 });
+}
+
 export async function PATCH({
 	params,
 	request,

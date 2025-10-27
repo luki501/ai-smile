@@ -82,4 +82,21 @@ export class SymptomService {
 
 		return data;
 	}
+
+	async deleteSymptom(symptomId: number, userId: string): Promise<void> {
+		const { error, count } = await this.supabase
+			.from('symptoms')
+			.delete({ count: 'exact' })
+			.eq('id', symptomId)
+			.eq('user_id', userId);
+
+		if (error) {
+			console.error('Error deleting symptom:', error);
+			throw new Error('Could not delete the symptom. Please try again later.');
+		}
+
+		if (count === 0) {
+			throw new Error('Symptom not found or user does not have permission to delete it.');
+		}
+	}
 }
