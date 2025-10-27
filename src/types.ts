@@ -7,14 +7,21 @@ import type { Database } from './db/database.types';
 export type Symptom = Database['public']['Tables']['symptoms']['Row'];
 
 /**
+ * Represents the shape of a symptom record for an insert operation.
+ */
+export type SymptomInsert = Database['public']['Tables']['symptoms']['Insert'];
+
+/**
  * Data Transfer Object for creating a new symptom.
  * It includes all the necessary fields that a user must provide.
  * The `user_id` is excluded as it will be inferred from the authenticated session on the server.
  */
 export type CreateSymptomCommand = Omit<
-	Symptom,
+	SymptomInsert,
 	'id' | 'created_at' | 'user_id'
->;
+> & {
+	occurred_at: string;
+};
 
 /**
  * Data Transfer Object for updating an existing symptom.
