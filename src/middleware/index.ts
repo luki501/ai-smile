@@ -1,25 +1,38 @@
 import { defineMiddleware } from 'astro:middleware';
 
-import { supabaseClient } from '../db/supabase.client.ts';
+import { createSupabaseServerClient } from '../db/supabase.server';
 
 export const onRequest = defineMiddleware(async (context, next) => {
-	const authHeader = context.request.headers.get('Authorization');
-	const token = authHeader?.split(' ')[1];
+	const supabase = createSupabaseServerClient(context.cookies);
 
-	if (token) {
-		const { data } = await supabaseClient.auth.getUser(token);
-		if (data.user) {
-			context.locals.user = data.user;
-			context.locals.session = null;
-		} else {
-			context.locals.session = null;
-			context.locals.user = null;
+	const {
+		data: { session },
+	} = await supabase.auth.getSession();
+
+	if (!session && import.meta.env.DEV) {
+		const email = import.meta.env.DEV_USER_EMAIL;
+		const password = import.meta.env.DEV_USER_PASSWORD;
+
+		if (email && password) {
+			const { error } = await supabase.auth.signInWithPassword({
+				email,
+				password,
+			});
+
+			if (!error) {
+				const {
+					data: { session: newSession },
+				} = await supabase.auth.getSession();
+				context.locals.session = newSession;
+				context.locals.user = newSession?.user ?? null;
+			}
 		}
 	} else {
-		context.locals.session = null;
-		context.locals.user = null;
+		context.locals.session = session;
+		context.locals.user = session?.user ?? null;
 	}
-	
-	context.locals.supabase = supabaseClient;
+
+	context.locals.supabase = supabase;
+
 	return next();
 });
