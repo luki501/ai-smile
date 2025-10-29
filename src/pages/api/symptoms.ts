@@ -1,9 +1,8 @@
-import type { APIRoute, APIContext } from 'astro';
+import type { APIRoute } from 'astro';
 import { z } from 'zod';
-
-import { createSymptom, getSymptoms } from 'src/lib/services/symptom.service';
-import { getSymptomsQuerySchema } from 'src/lib/symptoms/symptoms.validators';
-import type { CreateSymptomCommand } from 'src/types';
+import { SymptomService } from '@/lib/symptoms/symptoms.service';
+import { getSymptomsSchema } from '@/lib/symptoms/symptoms.validators';
+import type { CreateSymptomCommand } from '@/types';
 
 export const prerender = false;
 
@@ -14,15 +13,10 @@ const createSymptomSchema: z.ZodType<Omit<CreateSymptomCommand, 'occurred_at'> &
 	notes: z.string().nullable().optional(),
 });
 
-export const GET: APIRoute = async ({ request, locals }: APIContext) => {
-	console.log('--- Nowe zapytanie GET do /api/symptoms ---');
-	console.log('Przychodzące nagłówki:', Object.fromEntries(request.headers.entries()));
+export const GET: APIRoute = async ({ request, locals }) => {
+	const { session, supabase } = locals;
 
-	const { user, supabase } = locals;
-	console.log('Użytkownik odczytany przez middleware:', user);
-
-	if (!user) {
-		console.log('Brak użytkownika. Odpowiedź: 401 Unauthorized.');
+	if (!session?.user) {
 		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
 			status: 401,
 			headers: { 'Content-Type': 'application/json' },
@@ -32,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals }: APIContext) => {
 	const url = new URL(request.url);
 	const queryParams = Object.fromEntries(url.searchParams.entries());
 
-	const validationResult = getSymptomsQuerySchema.safeParse(queryParams);
+	const validationResult = getSymptomsSchema.safeParse(queryParams);
 
 	if (!validationResult.success) {
 		return new Response(
@@ -45,9 +39,9 @@ export const GET: APIRoute = async ({ request, locals }: APIContext) => {
 	}
 
 	try {
-		const { data, count } = await getSymptoms(
-			supabase,
-			user.id,
+		const symptomService = new SymptomService(supabase);
+		const { data, count } = await symptomService.getSymptoms(
+			session.user.id,
 			validationResult.data,
 		);
 
@@ -69,10 +63,10 @@ export const GET: APIRoute = async ({ request, locals }: APIContext) => {
 	}
 };
 
-export const POST: APIRoute = async ({ request, locals }: APIContext) => {
-	const { user, supabase } = locals;
+export const POST: APIRoute = async ({ request, locals }) => {
+	const { session, supabase } = locals;
 
-	if (!user) {
+	if (!session?.user) {
 		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
 			status: 401,
 			headers: { 'Content-Type': 'application/json' },
@@ -102,9 +96,9 @@ export const POST: APIRoute = async ({ request, locals }: APIContext) => {
 	}
 
 	try {
-		const newSymptom = await createSymptom(
-			supabase,
-			user.id,
+		const symptomService = new SymptomService(supabase);
+		const newSymptom = await symptomService.createSymptom(
+			session.user.id,
 			validationResult.data,
 		);
 		return new Response(JSON.stringify(newSymptom), {

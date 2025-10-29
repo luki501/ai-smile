@@ -1,8 +1,11 @@
 ---
-import Welcome from "../components/Welcome.astro";
-import Layout from "../layouts/Layout.astro";
+import SymptomsList from '../components/SymptomsList';
+import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout>
-  <Welcome />
+	<main class="container mx-auto p-4">
+		<h1 class="text-2xl font-bold mb-4">My Symptoms</h1>
+		<SymptomsList client:load />
+	</main>
 </Layout>

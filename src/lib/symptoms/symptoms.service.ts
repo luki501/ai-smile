@@ -1,12 +1,35 @@
-import type { SupabaseClient } from '../../db/supabase.client';
-import type { SymptomDetailsDto, SymptomDto, UpdateSymptomCommand } from '../../types';
-import type { getSymptomsQuerySchema } from './symptoms.validators';
+import type { SupabaseClient } from '@/db/supabase.client';
+import type {
+	CreateSymptomCommand,
+	SymptomDetailsDto,
+	SymptomDto,
+	UpdateSymptomCommand,
+} from '@/types';
+import type { getSymptomsSchema } from './symptoms.validators';
 import type { z } from 'zod';
 
-type GetSymptomsFilters = z.infer<typeof getSymptomsQuerySchema>;
+type GetSymptomsFilters = z.infer<typeof getSymptomsSchema>;
 
 export class SymptomService {
 	constructor(private readonly supabase: SupabaseClient) {}
+
+	async createSymptom(
+		userId: string,
+		symptomData: CreateSymptomCommand
+	): Promise<SymptomDetailsDto> {
+		const { data, error } = await this.supabase
+			.from('symptoms')
+			.insert({ ...symptomData, user_id: userId })
+			.select()
+			.single();
+
+		if (error) {
+			console.error('Error creating symptom:', error);
+			throw new Error('Could not create the symptom. Please try again later.');
+		}
+
+		return data;
+	}
 
 	async getSymptoms(
 		userId: string,
@@ -42,7 +65,7 @@ export class SymptomService {
 			query = query.eq('body_part', body_part);
 		}
 
-		query = query.range(offset, offset + limit - 1);
+		query = query.range(offset, offset + limit - 1).order('occurred_at', { ascending: false });
 
 		const { data, error, count } = await query;
 
