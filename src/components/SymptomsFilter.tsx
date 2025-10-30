@@ -30,11 +30,27 @@ const SymptomsFilter: React.FC<SymptomsFilterProps> = ({ onFilterChange, initial
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
-		setFilters((prev) => ({ ...prev, [name]: value || undefined }));
+		setFilters(prev => {
+			const newFilters = { ...prev, [name]: value || undefined };
+
+			if (name === 'occurred_at_gte' && value) {
+				const date = new Date(value);
+				date.setHours(0, 0, 0, 0);
+				newFilters.occurred_at_gte = date.toISOString();
+			}
+
+			if (name === 'occurred_at_lte' && value) {
+				const date = new Date(value);
+				date.setHours(23, 59, 59, 999);
+				newFilters.occurred_at_lte = date.toISOString();
+			}
+
+			return newFilters;
+		});
 	};
 
 	const handleSelectChange = (name: string, value: string) => {
-		setFilters((prev) => ({ ...prev, [name]: value || undefined }));
+		setFilters(prev => ({ ...prev, [name]: value || undefined }));
 	};
 
 	const handleReset = () => {
@@ -49,20 +65,20 @@ const SymptomsFilter: React.FC<SymptomsFilterProps> = ({ onFilterChange, initial
 				<div>
 					<Label htmlFor="occurred_at_gte">From</Label>
 					<Input
-						type="datetime-local"
+						type="date"
 						id="occurred_at_gte"
 						name="occurred_at_gte"
-						value={filters.occurred_at_gte || ''}
+						value={filters.occurred_at_gte?.split('T')[0] || ''}
 						onChange={handleInputChange}
 					/>
 				</div>
 				<div>
 					<Label htmlFor="occurred_at_lte">To</Label>
 					<Input
-						type="datetime-local"
+						type="date"
 						id="occurred_at_lte"
 						name="occurred_at_lte"
-						value={filters.occurred_at_lte || ''}
+						value={filters.occurred_at_lte?.split('T')[0] || ''}
 						onChange={handleInputChange}
 					/>
 				</div>

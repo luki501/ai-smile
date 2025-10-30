@@ -31,7 +31,7 @@ import {
 	BODY_PARTS,
 	SYMPTOM_TYPES,
 } from '@/lib/symptoms/symptom.constants';
-import { cn } from '@/lib/utils';
+import { cn, capitalize } from '@/lib/utils';
 import type { CreateSymptomCommand, SymptomDto } from '@/types';
 
 interface SymptomFormProps {
@@ -59,22 +59,27 @@ export function SymptomForm({
 	const [occurredAt, setOccurredAt] = useState<Date | undefined>(
 		initialOccurredAt,
 	);
+	const [symptomType, setSymptomType] = useState(
+		initialData?.symptom_type ? capitalize(initialData.symptom_type) : ''
+	);
+	const [bodyPart, setBodyPart] = useState(
+		initialData?.body_part ? capitalize(initialData.body_part) : ''
+	);
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		setError(null);
 
 		const formData = new FormData(event.currentTarget);
-		const symptomData = Object.fromEntries(
-			formData.entries(),
-		) as CreateSymptomCommand;
+		// notes and occurred_at are handled separately or via state
+		const notes = formData.get('notes') as string;
 
-		if (typeof symptomData.symptom_type === 'string') {
-			symptomData.symptom_type = symptomData.symptom_type.toLowerCase() as any;
-		}
-		if (typeof symptomData.body_part === 'string') {
-			symptomData.body_part = symptomData.body_part.toLowerCase() as any;
-		}
+		const symptomData: CreateSymptomCommand = {
+			symptom_type: symptomType.toLowerCase() as any,
+			body_part: bodyPart.toLowerCase() as any,
+			notes: notes,
+			occurred_at: occurredAt ? occurredAt.toISOString() : new Date().toISOString(),
+		};
 
 		if (!occurredAt) {
 			setError('Date of occurrence is required.');
@@ -92,6 +97,8 @@ export function SymptomForm({
 			if (!initialData) {
 				event.currentTarget.reset();
 				setOccurredAt(new Date());
+				setSymptomType('');
+				setBodyPart('');
 			}
 		} catch (e) {
 			setError((e as Error).message);
@@ -138,8 +145,8 @@ export function SymptomForm({
 					<div className="grid gap-2">
 						<Label htmlFor="symptom_type">Symptom Type</Label>
 						<Select
-							name="symptom_type"
-							defaultValue={initialData?.symptom_type}
+							value={symptomType}
+							onValueChange={setSymptomType}
 						>
 							<SelectTrigger id="symptom_type">
 								<SelectValue placeholder="Select a symptom type" />
@@ -155,7 +162,10 @@ export function SymptomForm({
 					</div>
 					<div className="grid gap-2">
 						<Label htmlFor="body_part">Body Part</Label>
-						<Select name="body_part" defaultValue={initialData?.body_part}>
+						<Select
+							value={bodyPart}
+							onValueChange={setBodyPart}
+						>
 							<SelectTrigger id="body_part">
 								<SelectValue placeholder="Select a body part" />
 							</SelectTrigger>
