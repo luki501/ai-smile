@@ -1,5 +1,5 @@
 import React from 'react';
-import useSymptoms from './hooks/useSymptoms';
+import { useSymptoms } from './hooks/useSymptoms';
 import type { SymptomDto } from '../types';
 import SymptomsFilter from './SymptomsFilter';
 import { Button } from './ui/button';

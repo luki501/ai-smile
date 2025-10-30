@@ -198,3 +198,40 @@ to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy symptoms_auth_delete
 on public.symptoms for delete
 to authenticated using (auth.uid() = user_id);
+
+--
+-- section: functions
+-- description: defines database functions for handling user-related actions, such as profile creation.
+--
+
+-- function: handle_new_user
+-- purpose: automatically creates a new profile row when a new user signs up.
+create function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id)
+  values (new.id);
+  return new;
+end;
+$$;
+
+-- By default, the function is owned by the user running the migration.
+-- We need to change the owner to the `postgres` role, which is a superuser
+-- in the Supabase local dev environment and can bypass RLS.
+alter function public.handle_new_user() owner to postgres;
+
+comment on function public.handle_new_user() is 'creates a new user profile upon registration.';
+
+--
+-- section: triggers
+-- description: sets up triggers to automate database operations, like calling handle_new_user on user creation.
+--
+
+-- trigger: on_auth_user_created
+-- purpose: fires after a new user is created in the auth.users table to create their profile.
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();

@@ -8,8 +8,14 @@ export const prerender = false;
 
 const createSymptomSchema: z.ZodType<Omit<CreateSymptomCommand, 'occurred_at'> & { occurred_at: string }> = z.object({
 	occurred_at: z.string().datetime(),
-	symptom_type: z.enum(['tingle', 'numbness', 'cramps', 'fuckedup']),
-	body_part: z.enum(['head', 'neck', 'back', 'arms', 'hands', 'legs']),
+	symptom_type: z.preprocess(
+		(val) => (typeof val === 'string' ? val.toLowerCase() : val),
+		z.enum(['tingle', 'numbness', 'cramps', 'fuckedup']),
+	),
+	body_part: z.preprocess(
+		(val) => (typeof val === 'string' ? val.toLowerCase() : val),
+		z.enum(['head', 'neck', 'back', 'arms', 'hands', 'legs']),
+	),
 	notes: z.string().nullable().optional(),
 });
 

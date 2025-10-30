@@ -1,23 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { SymptomDto } from '../../types';
-import { getSymptomsSchema } from '../../lib/symptoms/symptoms.validators';
+import type { SymptomDto, CreateSymptomCommand } from '@/types';
+import { getSymptomsSchema } from '@/lib/symptoms/symptoms.validators';
 import { z } from 'zod';
 
 type Filters = z.infer<typeof getSymptomsSchema>;
 
-interface UseSymptomsResult {
+export type SymptomsHook = {
 	symptoms: SymptomDto[];
 	count: number;
-	loading: boolean;
+	isLoading: boolean;
 	error: Error | null;
 	filters: Filters;
 	setFilters: (filters: Filters | ((prevFilters: Filters) => Filters)) => void;
-}
+	createSymptom: (symptom: CreateSymptomCommand) => Promise<void>;
+};
 
-const useSymptoms = (initialFilters: Partial<Filters> = {}): UseSymptomsResult => {
+export function useSymptoms(initialFilters: Partial<Filters> = {}): SymptomsHook {
 	const [symptoms, setSymptoms] = useState<SymptomDto[]>([]);
 	const [count, setCount] = useState(0);
-	const [loading, setLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
 	const [filters, setFilters] = useState<Filters>({
 		offset: 0,
@@ -26,9 +27,8 @@ const useSymptoms = (initialFilters: Partial<Filters> = {}): UseSymptomsResult =
 	});
 
 	const fetchSymptoms = useCallback(async () => {
-		setLoading(true);
+		setIsLoading(true);
 		setError(null);
-
 		try {
 			const validatedFilters = getSymptomsSchema.parse(filters);
 			const params = new URLSearchParams(
@@ -42,21 +42,17 @@ const useSymptoms = (initialFilters: Partial<Filters> = {}): UseSymptomsResult =
 					{} as Record<string, string>,
 				),
 			);
-			
 			const response = await fetch(`/api/symptoms?${params.toString()}`);
-
 			if (!response.ok) {
-				throw new Error(`Failed to fetch symptoms: ${response.statusText}`);
+				throw new Error('Failed to fetch symptoms');
 			}
-			
 			const result = await response.json();
-			
 			setSymptoms(result.data || []);
 			setCount(result.count || 0);
-		} catch (err) {
-			setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+		} catch (e) {
+			setError(e as Error);
 		} finally {
-			setLoading(false);
+			setIsLoading(false);
 		}
 	}, [filters]);
 
@@ -64,8 +60,36 @@ const useSymptoms = (initialFilters: Partial<Filters> = {}): UseSymptomsResult =
 		fetchSymptoms();
 	}, [fetchSymptoms]);
 
-	return { symptoms, count, loading, error, filters, setFilters };
-};
+	const createSymptom = useCallback(
+		async (symptomData: CreateSymptomCommand) => {
+			setIsLoading(true);
+			setError(null);
+			try {
+				const response = await fetch('/api/symptoms', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(symptomData),
+				});
 
-export default useSymptoms;
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.message || 'Failed to create symptom');
+				}
+
+				// After creating, refetch the list to see the new symptom
+				await fetchSymptoms();
+			} catch (e) {
+				setError(e as Error);
+				throw e;
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[fetchSymptoms],
+	);
+
+	return { symptoms, count, isLoading, error, filters, setFilters, createSymptom };
+}
 
