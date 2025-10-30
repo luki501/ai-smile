@@ -1,0 +1,36 @@
+---
+export const prerender = false;
+
+import { SymptomService } from '@/lib/symptoms/symptoms.service';
+import Layout from '@/layouts/Layout.astro';
+// This component will be created in the next step
+import SymptomEditor from '@/components/symptoms/SymptomEditor.tsx';
+
+const { locals, params, redirect } = Astro;
+
+const session = await locals.safeGetSession();
+if (!session?.user) {
+	return redirect('/');
+}
+
+const { id } = params;
+const symptomId = parseInt(id!, 10);
+
+if (isNaN(symptomId)) {
+	return new Response('Invalid ID', { status: 400 });
+}
+
+const symptomService = new SymptomService(locals.supabase);
+const symptom = await symptomService.getSymptomById(symptomId, session.user.id);
+
+if (!symptom) {
+	return new Response('Symptom not found', { status: 404 });
+}
+---
+
+<Layout title="Edit Symptom">
+	<main class="container mx-auto max-w-2xl px-4 py-8">
+		<h1 class="mb-6 text-3xl font-bold">Edit Symptom</h1>
+		<SymptomEditor symptom={symptom} client:load />
+	</main>
+</Layout>

@@ -1,4 +1,5 @@
-import type { SupabaseClient } from '@/db/supabase.client';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/db/database.types';
 import type {
 	CreateSymptomCommand,
 	SymptomDetailsDto,
@@ -11,7 +12,7 @@ import type { z } from 'zod';
 type GetSymptomsFilters = z.infer<typeof getSymptomsSchema>;
 
 export class SymptomService {
-	constructor(private readonly supabase: SupabaseClient) {}
+	constructor(private readonly supabase: SupabaseClient<Database>) {}
 
 	async createSymptom(
 		userId: string,
@@ -76,6 +77,28 @@ export class SymptomService {
 		}
 
 		return { data, count };
+	}
+
+	async getSymptomById(
+		symptomId: number,
+		userId: string
+	): Promise<SymptomDetailsDto | null> {
+		const { data, error } = await this.supabase
+			.from('symptoms')
+			.select('*')
+			.eq('id', symptomId)
+			.eq('user_id', userId)
+			.single();
+
+		if (error) {
+			console.error('Error fetching single symptom:', error);
+			if (error.code === 'PGRST116') {
+				return null;
+			}
+			throw new Error('Could not fetch the symptom.');
+		}
+
+		return data;
 	}
 
 	async updateSymptom(

@@ -1,14 +1,14 @@
-import { SymptomService } from '@lib/symptoms/symptoms.service';
-import { updateSymptomCommandSchema } from '@lib/symptoms/symptoms.validators';
 import type { APIContext } from 'astro';
 import { z } from 'zod';
+import { updateSymptomSchema } from '@/lib/symptoms/symptoms.validators';
+import { SymptomService } from '@/lib/symptoms/symptoms.service';
 
 export const prerender = false;
 
 const idSchema = z.coerce.number().int().positive();
 
 export async function DELETE({ params, locals }: APIContext): Promise<Response> {
-	const { user, supabase } = locals;
+	const { user } = locals;
 
 	if (!user) {
 		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
@@ -25,7 +25,7 @@ export async function DELETE({ params, locals }: APIContext): Promise<Response> 
 	}
 
 	try {
-		const symptomService = new SymptomService(supabase);
+		const symptomService = new SymptomService(locals.supabase);
 		await symptomService.deleteSymptom(validationResult.data, user.id);
 	} catch (error) {
 		if (error instanceof Error) {
@@ -44,70 +44,61 @@ export async function DELETE({ params, locals }: APIContext): Promise<Response> 
 	return new Response(null, { status: 204 });
 }
 
-export async function PATCH({
-	params,
-	request,
-	locals,
-}: APIContext): Promise<Response> {
-	const { user, supabase } = locals;
 
-	if (!user) {
-		return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-			status: 401,
-		});
+export async function PATCH({ params, request, locals }: APIContext): Promise<Response> {
+	const session = await locals.safeGetSession();
+	if (!session?.user) {
+		return new Response(JSON.stringify({ message: 'Unauthorized' }), { status: 401 });
 	}
 
-	const symptomId = Number(params.id);
+	const idValidationResult = idSchema.safeParse(params.id);
 
-	if (isNaN(symptomId)) {
-		return new Response(JSON.stringify({ message: 'Symptom ID must be a number.' }), {
+	if (!idValidationResult.success) {
+		return new Response(JSON.stringify({ errors: idValidationResult.error.flatten() }), {
 			status: 400,
 		});
 	}
+	const id = idValidationResult.data;
 
-	let requestBody;
+	let body;
 	try {
-		requestBody = await request.json();
+		body = await request.json();
 	} catch (error) {
-		return new Response(JSON.stringify({ message: 'Invalid JSON body.' }), {
-			status: 400,
-		});
+		return new Response(JSON.stringify({ message: 'Invalid JSON body' }), { status: 400 });
 	}
 
-	const validationResult = updateSymptomCommandSchema.safeParse(requestBody);
-
+	const validationResult = updateSymptomSchema.safeParse(body);
 	if (!validationResult.success) {
 		return new Response(JSON.stringify({ errors: validationResult.error.flatten() }), {
 			status: 422,
 		});
 	}
 
+	if (Object.keys(validationResult.data).length === 0) {
+		return new Response(
+			JSON.stringify({ message: 'At least one field must be provided to update.' }),
+			{ status: 422 }
+		);
+	}
+
 	try {
-		const symptomService = new SymptomService(supabase);
+		const symptomService = new SymptomService(locals.supabase);
 		const updatedSymptom = await symptomService.updateSymptom(
-			symptomId,
-			user.id,
+			id,
+			session.user.id,
 			validationResult.data
 		);
 
 		if (!updatedSymptom) {
 			return new Response(
-				JSON.stringify({
-					message: `Symptom with ID ${symptomId} not found.`,
-				}),
+				JSON.stringify({ message: 'Symptom not found or user does not have permission' }),
 				{ status: 404 }
 			);
 		}
 
-		return new Response(JSON.stringify(updatedSymptom), {
-			status: 200,
-			headers: { 'Content-Type': 'application/json' },
-		});
+		return new Response(JSON.stringify(updatedSymptom), { status: 200 });
 	} catch (error) {
 		console.error('Failed to update symptom:', error);
-		const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
-		return new Response(JSON.stringify({ message: 'Internal Server Error', error: errorMessage }), {
-			status: 500,
-		});
+		return new Response(JSON.stringify({ message: 'Internal Server Error' }), { status: 500 });
 	}
 }

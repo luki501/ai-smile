@@ -12,8 +12,13 @@ const SymptomItem: React.FC<{ symptom: SymptomDto }> = ({ symptom }) => {
 				<div>
 					<p className="font-semibold">{symptom.symptom_type} - <span className="font-normal">{symptom.body_part}</span></p>
 					<p className="text-sm text-gray-600">{symptom.notes || 'No notes'}</p>
+					<p className="text-sm text-gray-500 mt-1">{formattedDate}</p>
 				</div>
-				<p className="text-sm text-gray-500">{formattedDate}</p>
+				<a href={`/symptoms/edit/${symptom.id}`}>
+					<Button variant="outline" size="sm">
+						Edit
+					</Button>
+				</a>
 			</div>
 		</li>
 	);

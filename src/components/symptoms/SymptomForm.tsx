@@ -32,13 +32,33 @@ import {
 	SYMPTOM_TYPES,
 } from '@/lib/symptoms/symptom.constants';
 import { cn } from '@/lib/utils';
-import type { CreateSymptomCommand } from '@/types';
-import { useSymptoms } from '../hooks/useSymptoms';
+import type { CreateSymptomCommand, SymptomDto } from '@/types';
 
-export function SymptomForm() {
-	const { createSymptom, isLoading } = useSymptoms();
+interface SymptomFormProps {
+	initialData?: SymptomDto | null;
+	onSubmit: (data: CreateSymptomCommand) => Promise<void>;
+	isLoading: boolean;
+	submitButtonText?: string;
+	title: string;
+	description: string;
+}
+
+export function SymptomForm({
+	initialData,
+	onSubmit,
+	isLoading,
+	submitButtonText = 'Save',
+	title,
+	description,
+}: SymptomFormProps) {
 	const [error, setError] = useState<string | null>(null);
-	const [occurredAt, setOccurredAt] = useState<Date | undefined>(new Date());
+
+	const initialOccurredAt = initialData?.occurred_at
+		? new Date(initialData.occurred_at)
+		: new Date();
+	const [occurredAt, setOccurredAt] = useState<Date | undefined>(
+		initialOccurredAt,
+	);
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -68,9 +88,11 @@ export function SymptomForm() {
 		}
 
 		try {
-			await createSymptom(symptomData);
-			event.currentTarget.reset();
-			setOccurredAt(new Date());
+			await onSubmit(symptomData);
+			if (!initialData) {
+				event.currentTarget.reset();
+				setOccurredAt(new Date());
+			}
 		} catch (e) {
 			setError((e as Error).message);
 		}
@@ -80,10 +102,8 @@ export function SymptomForm() {
 		<Card className="w-full max-w-lg">
 			<form onSubmit={handleSubmit}>
 				<CardHeader>
-					<CardTitle>Log a New Symptom</CardTitle>
-					<CardDescription>
-						Fill out the form below to add a new symptom entry.
-					</CardDescription>
+					<CardTitle>{title}</CardTitle>
+					<CardDescription>{description}</CardDescription>
 				</CardHeader>
 				<CardContent className="grid gap-6">
 					<div className="grid gap-2">
@@ -117,7 +137,10 @@ export function SymptomForm() {
 					</div>
 					<div className="grid gap-2">
 						<Label htmlFor="symptom_type">Symptom Type</Label>
-						<Select name="symptom_type">
+						<Select
+							name="symptom_type"
+							defaultValue={initialData?.symptom_type}
+						>
 							<SelectTrigger id="symptom_type">
 								<SelectValue placeholder="Select a symptom type" />
 							</SelectTrigger>
@@ -132,7 +155,7 @@ export function SymptomForm() {
 					</div>
 					<div className="grid gap-2">
 						<Label htmlFor="body_part">Body Part</Label>
-						<Select name="body_part">
+						<Select name="body_part" defaultValue={initialData?.body_part}>
 							<SelectTrigger id="body_part">
 								<SelectValue placeholder="Select a body part" />
 							</SelectTrigger>
@@ -152,13 +175,14 @@ export function SymptomForm() {
 							name="notes"
 							placeholder="Enter any additional notes..."
 							className="min-h-[100px]"
+							defaultValue={initialData?.notes ?? ''}
 						/>
 					</div>
 					{error && <p className="text-sm text-red-500">{error}</p>}
 				</CardContent>
 				<CardFooter>
 					<Button type="submit" className="ml-auto" disabled={isLoading}>
-						{isLoading ? 'Saving...' : 'Save Symptom'}
+						{isLoading ? 'Saving...' : submitButtonText}
 					</Button>
 				</CardFooter>
 			</form>

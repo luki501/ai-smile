@@ -33,6 +33,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	}
 
 	context.locals.supabase = supabase;
+	context.locals.safeGetSession = async () => {
+		const {
+			data: { session },
+		} = await supabase.auth.getSession();
+		return session;
+	};
 
 	return next();
 });

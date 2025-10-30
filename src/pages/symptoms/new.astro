@@ -1,10 +1,10 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import { SymptomForm } from '@/components/symptoms/SymptomForm';
+import SymptomCreator from '@/components/symptoms/SymptomCreator';
 ---
 
 <Layout title="Log a New Symptom">
 	<main class="container mx-auto flex min-h-screen flex-col items-center justify-center py-12">
-		<SymptomForm client:load />
+		<SymptomCreator client:load />
 	</main>
 </Layout>

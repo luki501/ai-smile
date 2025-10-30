@@ -12,6 +12,13 @@ export const getSymptomsSchema = z.object({
 
 export type GetSymptomsQuery = z.infer<typeof getSymptomsSchema>;
 
+export const createSymptomSchema = z.object({
+	occurred_at: z.string().datetime(),
+	symptom_type: z.enum(Constants.public.Enums.symptom_type_enum),
+	body_part: z.enum(Constants.public.Enums.body_part_enum),
+	notes: z.string().optional(),
+});
+
 export const updateSymptomCommandSchema = z
 	.object({
 		occurred_at: z.string().datetime({ offset: true }).optional(),
@@ -23,3 +30,5 @@ export const updateSymptomCommandSchema = z
 		(data) => Object.keys(data).length > 0,
 		'At least one field must be provided for update'
 	);
+
+export const updateSymptomSchema = createSymptomSchema.partial();

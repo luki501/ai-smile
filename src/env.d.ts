@@ -9,6 +9,7 @@ declare global {
       supabase: SupabaseClient<Database>;
       session: Session | null;
       user: User | null;
+      safeGetSession(): Promise<Session | null>;
     }
   }
 }
