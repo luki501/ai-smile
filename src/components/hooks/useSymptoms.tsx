@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { SymptomDto, CreateSymptomCommand } from '@/types';
+import type { SymptomDto, CreateSymptomCommand, UpdateSymptomCommand } from '@/types';
 import { getSymptomsSchema } from '@/lib/symptoms/symptoms.validators';
 import { z } from 'zod';
 
@@ -13,12 +13,16 @@ export type SymptomsHook = {
 	filters: Filters;
 	setFilters: (filters: Filters | ((prevFilters: Filters) => Filters)) => void;
 	createSymptom: (symptom: CreateSymptomCommand) => Promise<void>;
+	updateSymptom: (id: string, symptom: UpdateSymptomCommand) => Promise<void>;
+	deleteSymptom: (id: string) => Promise<void>;
+	isDeleting: boolean;
 };
 
 export function useSymptoms(initialFilters: Partial<Filters> = {}): SymptomsHook {
 	const [symptoms, setSymptoms] = useState<SymptomDto[]>([]);
 	const [count, setCount] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
+	const [isDeleting, setIsDeleting] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
 	const [filters, setFilters] = useState<Filters>({
 		offset: 0,
@@ -90,6 +94,71 @@ export function useSymptoms(initialFilters: Partial<Filters> = {}): SymptomsHook
 		[fetchSymptoms],
 	);
 
-	return { symptoms, count, isLoading, error, filters, setFilters, createSymptom };
+	const updateSymptom = useCallback(
+		async (id: string, symptomData: UpdateSymptomCommand) => {
+			setIsLoading(true);
+			setError(null);
+			try {
+				const response = await fetch(`/api/symptoms/${id}`, {
+					method: 'PATCH',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(symptomData),
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.message || 'Failed to update symptom');
+				}
+
+				await fetchSymptoms();
+			} catch (e) {
+				setError(e as Error);
+				throw e;
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[fetchSymptoms]
+	);
+
+	const deleteSymptom = useCallback(
+		async (id: string) => {
+			setIsDeleting(true);
+			setError(null);
+			try {
+				const response = await fetch(`/api/symptoms/${id}`, {
+					method: 'DELETE',
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.message || 'Failed to delete symptom');
+				}
+
+				await fetchSymptoms();
+			} catch (e) {
+				setError(e as Error);
+				throw e;
+			} finally {
+				setIsDeleting(false);
+			}
+		},
+		[fetchSymptoms]
+	);
+
+	return {
+		symptoms,
+		count,
+		isLoading,
+		error,
+		filters,
+		setFilters,
+		createSymptom,
+		updateSymptom,
+		deleteSymptom,
+		isDeleting,
+	};
 }
 

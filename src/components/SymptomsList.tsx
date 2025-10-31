@@ -3,6 +3,17 @@ import { useSymptoms } from './hooks/useSymptoms';
 import type { SymptomDto } from '../types';
 import SymptomsFilter from './SymptomsFilter';
 import { Button } from './ui/button';
+import SymptomItemSkeleton from './symptoms/SymptomItemSkeleton';
+import EmptyState from './EmptyState';
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from '@/components/ui/pagination';
 
 const SymptomItem: React.FC<{ symptom: SymptomDto }> = ({ symptom }) => {
 	const formattedDate = new Date(symptom.occurred_at).toLocaleString();
@@ -27,7 +38,8 @@ const SymptomItem: React.FC<{ symptom: SymptomDto }> = ({ symptom }) => {
 const SymptomsList: React.FC = () => {
 	const { symptoms, count, loading, error, filters, setFilters } = useSymptoms();
 
-	const handlePageChange = (newOffset: number) => {
+	const handlePageChange = (page: number) => {
+		const newOffset = (page - 1) * filters.limit;
 		setFilters((prev) => ({ ...prev, offset: newOffset }));
 	};
 
@@ -46,9 +58,22 @@ const SymptomsList: React.FC = () => {
 					<h2 className="text-lg font-semibold">Symptoms ({count ?? 0})</h2>
 				</div>
 				{loading ? (
-					<p className="p-4">Loading symptoms...</p>
+					<ul>
+						{Array.from({ length: filters.limit }).map((_, index) => (
+							<SymptomItemSkeleton key={index} />
+						))}
+					</ul>
 				) : symptoms.length === 0 ? (
-					<p className="p-4">No symptoms found.</p>
+					<div className="p-4">
+						<EmptyState
+							title="No symptoms found"
+							description="You haven't recorded any symptoms yet. Get started by adding a new one."
+							action={{
+								label: 'Add New Symptom',
+								href: '/symptoms/new',
+							}}
+						/>
+					</div>
 				) : (
 					<ul className="divide-y divide-gray-200">
 						{symptoms.map((symptom) => (
@@ -56,23 +81,62 @@ const SymptomsList: React.FC = () => {
 						))}
 					</ul>
 				)}
-				{pageCount > 1 && (
-					<div className="p-4 flex justify-between items-center">
-						<Button
-							onClick={() => handlePageChange(filters.offset - filters.limit)}
-							disabled={currentPage <= 1}
-						>
-							Previous
-						</Button>
-						<span>
-							Page {currentPage} of {pageCount}
-						</span>
-						<Button
-							onClick={() => handlePageChange(filters.offset + filters.limit)}
-							disabled={currentPage >= pageCount}
-						>
-							Next
-						</Button>
+				{pageCount > 1 && !loading && (
+					<div className="p-4 flex justify-center">
+						<Pagination>
+							<PaginationContent>
+								<PaginationItem>
+									<PaginationPrevious
+										href="#"
+										onClick={(e) => {
+											e.preventDefault();
+											if (currentPage > 1) {
+												handlePageChange(currentPage - 1);
+											}
+										}}
+										className={
+											currentPage <= 1 ? 'pointer-events-none opacity-50' : ''
+										}
+									/>
+								</PaginationItem>
+
+								{/* Simplified pagination links logic */}
+								{Array.from({ length: pageCount }, (_, i) => i + 1).map(
+									(page) => (
+										<PaginationItem key={page}>
+											<PaginationLink
+												href="#"
+												onClick={(e) => {
+													e.preventDefault();
+													handlePageChange(page);
+												}}
+												isActive={page === currentPage}
+											>
+												{page}
+											</PaginationLink>
+										</PaginationItem>
+									),
+								)}
+								{/* In a real app, you would add ellipsis logic for many pages */}
+
+								<PaginationItem>
+									<PaginationNext
+										href="#"
+										onClick={(e) => {
+											e.preventDefault();
+											if (currentPage < pageCount) {
+												handlePageChange(currentPage + 1);
+											}
+										}}
+										className={
+											currentPage >= pageCount
+												? 'pointer-events-none opacity-50'
+												: ''
+										}
+									/>
+								</PaginationItem>
+							</PaginationContent>
+						</Pagination>
 					</div>
 				)}
 			</div>

@@ -1,5 +1,24 @@
 import { z } from 'zod';
+import {
+	BODY_PARTS,
+	SYMPTOM_TYPES,
+} from '@/lib/symptoms/symptom.constants';
 import { Constants } from '../../db/database.types';
+
+export const symptomFormSchema = z.object({
+	occurred_at: z.date({
+		required_error: 'Date of occurrence is required.',
+	}),
+	symptom_type: z.string().refine((val) => SYMPTOM_TYPES.includes(val as any), {
+		message: 'Symptom type is required.',
+	}),
+	body_part: z.string().refine((val) => BODY_PARTS.includes(val as any), {
+		message: 'Body part is required.',
+	}),
+	notes: z.string().optional(),
+});
+
+export type SymptomFormValues = z.infer<typeof symptomFormSchema>;
 
 export const getSymptomsSchema = z.object({
 	offset: z.coerce.number().int().min(0).default(0),

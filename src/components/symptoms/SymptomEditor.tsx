@@ -1,61 +1,49 @@
 'use client';
 
-import { useState } from 'react';
-import type { SymptomDetailsDto, UpdateSymptomCommand } from '@/types';
+import { useSymptoms } from '../hooks/useSymptoms';
 import { SymptomForm } from './SymptomForm';
+import type { SymptomDto, UpdateSymptomCommand } from '@/types';
+import { toast } from 'sonner';
 
 interface SymptomEditorProps {
-	symptom: SymptomDetailsDto;
+	symptom: SymptomDto;
 }
 
 export default function SymptomEditor({ symptom }: SymptomEditorProps) {
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [successMessage, setSuccessMessage] = useState<string | null>(null);
+	const { updateSymptom, deleteSymptom, isLoading, isDeleting } = useSymptoms();
 
-	const handleSubmit = async (formData: UpdateSymptomCommand) => {
-		setIsLoading(true);
-		setError(null);
-		setSuccessMessage(null);
-
+	const handleSubmit = async (data: UpdateSymptomCommand) => {
 		try {
-			const response = await fetch(`/api/symptoms/${symptom.id}`, {
-				method: 'PATCH',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(formData),
-			});
+			await updateSymptom(symptom.id.toString(), data);
+			toast.success('Symptom updated successfully!');
+			window.location.href = '/';
+		} catch (error) {
+			toast.error((error as Error).message);
+			throw error;
+		}
+	};
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.message || 'Failed to update symptom.');
-			}
-			setSuccessMessage('Symptom updated successfully! Redirecting...');
-			setTimeout(() => {
-				window.location.href = '/';
-			}, 2000);
-		} catch (e) {
-			setError((e as Error).message);
-		} finally {
-			setIsLoading(false);
+	const handleDelete = async () => {
+		try {
+			await deleteSymptom(symptom.id.toString());
+			toast.success('Symptom deleted successfully!');
+			window.location.href = '/'; // Redirect to the symptoms list page
+		} catch (error) {
+			toast.error((error as Error).message);
+			throw error;
 		}
 	};
 
 	return (
-		<>
-			<SymptomForm
-				initialData={symptom}
-				onSubmit={handleSubmit}
-				isLoading={isLoading}
-				title="Edit Symptom"
-				description="Update the details of your symptom entry below."
-				submitButtonText="Update Symptom"
-			/>
-			{error && <p className="mt-4 text-center text-sm text-red-500">{error}</p>}
-			{successMessage && (
-				<p className="mt-4 text-center text-sm text-green-500">{successMessage}</p>
-			)}
-		</>
+		<SymptomForm
+			initialData={symptom}
+			onSubmit={handleSubmit}
+			onDelete={handleDelete}
+			isLoading={isLoading}
+			isDeleting={isDeleting}
+			title="Edit Symptom"
+			description="Update the details of your symptom entry."
+			submitButtonText="Save Changes"
+		/>
 	);
 }

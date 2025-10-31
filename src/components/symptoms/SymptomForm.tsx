@@ -1,8 +1,20 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -13,6 +25,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
 	Popover,
@@ -33,12 +54,17 @@ import {
 } from '@/lib/symptoms/symptom.constants';
 import { cn, capitalize } from '@/lib/utils';
 import type { CreateSymptomCommand, SymptomDto } from '@/types';
+import { symptomFormSchema } from '@/lib/symptoms/symptoms.validators';
+import type { SymptomFormValues } from '@/lib/symptoms/symptoms.validators';
 
 interface SymptomFormProps {
 	initialData?: SymptomDto | null;
 	onSubmit: (data: CreateSymptomCommand) => Promise<void>;
+	onDelete?: () => Promise<void>;
 	isLoading: boolean;
+	isDeleting?: boolean;
 	submitButtonText?: string;
+	deleteButtonText?: string;
 	title: string;
 	description: string;
 }
@@ -46,156 +72,225 @@ interface SymptomFormProps {
 export function SymptomForm({
 	initialData,
 	onSubmit,
+	onDelete,
 	isLoading,
+	isDeleting,
 	submitButtonText = 'Save',
+	deleteButtonText = 'Delete',
 	title,
 	description,
 }: SymptomFormProps) {
-	const [error, setError] = useState<string | null>(null);
+	const form = useForm<SymptomFormValues>({
+		resolver: zodResolver(symptomFormSchema),
+		defaultValues: {
+			occurred_at: initialData?.occurred_at
+				? new Date(initialData.occurred_at)
+				: new Date(),
+			symptom_type: initialData?.symptom_type
+				? capitalize(initialData.symptom_type)
+				: '',
+			body_part: initialData?.body_part
+				? capitalize(initialData.body_part)
+				: '',
+			notes: initialData?.notes ?? '',
+		},
+	});
 
-	const initialOccurredAt = initialData?.occurred_at
-		? new Date(initialData.occurred_at)
-		: new Date();
-	const [occurredAt, setOccurredAt] = useState<Date | undefined>(
-		initialOccurredAt,
-	);
-	const [symptomType, setSymptomType] = useState(
-		initialData?.symptom_type ? capitalize(initialData.symptom_type) : ''
-	);
-	const [bodyPart, setBodyPart] = useState(
-		initialData?.body_part ? capitalize(initialData.body_part) : ''
-	);
+	const {
+		handleSubmit,
+		formState: { errors },
+		reset,
+	} = form;
 
-	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		setError(null);
-
-		const formData = new FormData(event.currentTarget);
-		// notes and occurred_at are handled separately or via state
-		const notes = formData.get('notes') as string;
-
-		const symptomData: CreateSymptomCommand = {
-			symptom_type: symptomType.toLowerCase() as any,
-			body_part: bodyPart.toLowerCase() as any,
-			notes: notes,
-			occurred_at: occurredAt ? occurredAt.toISOString() : new Date().toISOString(),
+	const handleFormSubmit = async (values: SymptomFormValues) => {
+		const command: CreateSymptomCommand = {
+			...values,
+			occurred_at: values.occurred_at.toISOString(),
+			symptom_type:
+				values.symptom_type.toLowerCase() as CreateSymptomCommand['symptom_type'],
+			body_part:
+				values.body_part.toLowerCase() as CreateSymptomCommand['body_part'],
 		};
-
-		if (!occurredAt) {
-			setError('Date of occurrence is required.');
-			return;
-		}
-		symptomData.occurred_at = occurredAt.toISOString();
-
-		if (!symptomData.symptom_type || !symptomData.body_part) {
-			setError('Symptom type and body part are required.');
-			return;
-		}
-
 		try {
-			await onSubmit(symptomData);
+			await onSubmit(command);
 			if (!initialData) {
-				event.currentTarget.reset();
-				setOccurredAt(new Date());
-				setSymptomType('');
-				setBodyPart('');
+				reset();
 			}
-		} catch (e) {
-			setError((e as Error).message);
+		} catch (error) {
+			// Display server-side errors if any
+			form.setError('root.serverError', {
+				type: 'manual',
+				message: (error as Error).message,
+			});
 		}
 	};
 
 	return (
 		<Card className="w-full max-w-lg">
-			<form onSubmit={handleSubmit}>
-				<CardHeader>
-					<CardTitle>{title}</CardTitle>
-					<CardDescription>{description}</CardDescription>
-				</CardHeader>
-				<CardContent className="grid gap-6">
-					<div className="grid gap-2">
-						<Label htmlFor="occurred_at">Date of Occurrence</Label>
-						<Popover>
-							<PopoverTrigger asChild>
-								<Button
-									variant={'outline'}
-									className={cn(
-										'w-full justify-start text-left font-normal',
-										!occurredAt && 'text-muted-foreground',
-									)}
-								>
-									<CalendarIcon className="mr-2 h-4 w-4" />
-									{occurredAt ? (
-										format(occurredAt, 'PPP')
-									) : (
-										<span>Pick a date</span>
-									)}
-								</Button>
-							</PopoverTrigger>
-							<PopoverContent className="w-auto p-0">
-								<Calendar
-									mode="single"
-									selected={occurredAt}
-									onSelect={setOccurredAt}
-									initialFocus
-								/>
-							</PopoverContent>
-						</Popover>
-					</div>
-					<div className="grid gap-2">
-						<Label htmlFor="symptom_type">Symptom Type</Label>
-						<Select
-							value={symptomType}
-							onValueChange={setSymptomType}
-						>
-							<SelectTrigger id="symptom_type">
-								<SelectValue placeholder="Select a symptom type" />
-							</SelectTrigger>
-							<SelectContent>
-								{SYMPTOM_TYPES.map((type) => (
-									<SelectItem key={type} value={type}>
-										{type}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-					<div className="grid gap-2">
-						<Label htmlFor="body_part">Body Part</Label>
-						<Select
-							value={bodyPart}
-							onValueChange={setBodyPart}
-						>
-							<SelectTrigger id="body_part">
-								<SelectValue placeholder="Select a body part" />
-							</SelectTrigger>
-							<SelectContent>
-								{BODY_PARTS.map((part) => (
-									<SelectItem key={part} value={part}>
-										{part}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-					<div className="grid gap-2">
-						<Label htmlFor="notes">Notes</Label>
-						<Textarea
-							id="notes"
-							name="notes"
-							placeholder="Enter any additional notes..."
-							className="min-h-[100px]"
-							defaultValue={initialData?.notes ?? ''}
+			<Form {...form}>
+				<form onSubmit={handleSubmit(handleFormSubmit)}>
+					<CardHeader>
+						<CardTitle>{title}</CardTitle>
+						<CardDescription>{description}</CardDescription>
+					</CardHeader>
+					<CardContent className="grid gap-6">
+						<FormField
+							control={form.control}
+							name="occurred_at"
+							render={({ field }) => (
+								<FormItem className="flex flex-col">
+									<FormLabel>Date of Occurrence</FormLabel>
+									<Popover>
+										<PopoverTrigger asChild>
+											<FormControl>
+												<Button
+													variant={'outline'}
+													className={cn(
+														'w-full pl-3 text-left font-normal',
+														!field.value && 'text-muted-foreground'
+													)}
+												>
+													{field.value ? (
+														format(field.value, 'PPP')
+													) : (
+														<span>Pick a date</span>
+													)}
+													<CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+												</Button>
+											</FormControl>
+										</PopoverTrigger>
+										<PopoverContent className="w-auto p-0" align="start">
+											<Calendar
+												mode="single"
+												selected={field.value}
+												onSelect={field.onChange}
+												disabled={(date) =>
+													date > new Date() || date < new Date('1900-01-01')
+												}
+												initialFocus
+											/>
+										</PopoverContent>
+									</Popover>
+									<FormMessage />
+								</FormItem>
+							)}
 						/>
-					</div>
-					{error && <p className="text-sm text-red-500">{error}</p>}
-				</CardContent>
-				<CardFooter>
-					<Button type="submit" className="ml-auto" disabled={isLoading}>
-						{isLoading ? 'Saving...' : submitButtonText}
-					</Button>
-				</CardFooter>
-			</form>
+						<FormField
+							control={form.control}
+							name="symptom_type"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Symptom Type</FormLabel>
+									<Select onValueChange={field.onChange} defaultValue={field.value}>
+										<FormControl>
+											<SelectTrigger>
+												<SelectValue placeholder="Select a symptom type" />
+											</SelectTrigger>
+										</FormControl>
+										<SelectContent>
+											{SYMPTOM_TYPES.map((type) => (
+												<SelectItem key={type} value={type}>
+													{type}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="body_part"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Body Part</FormLabel>
+									<Select onValueChange={field.onChange} defaultValue={field.value}>
+										<FormControl>
+											<SelectTrigger>
+												<SelectValue placeholder="Select a body part" />
+											</SelectTrigger>
+										</FormControl>
+										<SelectContent>
+											{BODY_PARTS.map((part) => (
+												<SelectItem key={part} value={part}>
+													{part}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="notes"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Notes</FormLabel>
+									<FormControl>
+										<Textarea
+											placeholder="Enter any additional notes..."
+											className="min-h-[100px]"
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						{errors.root?.serverError && (
+							<p className="text-sm text-red-500">
+								{errors.root.serverError.message}
+							</p>
+						)}
+					</CardContent>
+					<CardFooter className="flex justify-between">
+						{initialData && onDelete && (
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button type="button" variant="destructive" disabled={isDeleting}>
+										{isDeleting ? 'Deleting...' : deleteButtonText}
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+										<AlertDialogDescription>
+											This action cannot be undone. This will permanently delete the
+											symptom record.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>Cancel</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={async (e) => {
+												e.preventDefault();
+												if (onDelete) {
+													try {
+														await onDelete();
+													} catch (err) {
+														form.setError('root.serverError', {
+															type: 'manual',
+															message: (err as Error).message,
+														});
+													}
+												}
+											}}
+										>
+											Continue
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
+						)}
+						<Button type="submit" className="ml-auto" disabled={isLoading}>
+							{isLoading ? 'Saving...' : submitButtonText}
+						</Button>
+					</CardFooter>
+				</form>
+			</Form>
 		</Card>
 	);
 }
