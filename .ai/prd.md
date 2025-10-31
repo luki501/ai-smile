@@ -38,6 +38,24 @@ Pacjenci ze stwardnieniem rozsianym często doświadczają różnorodnych i zmie
 -   Operacje zakończone sukcesem (np. dodanie wpisu) lub niepowodzeniem będą komunikowane za pomocą powiadomień typu "toast".
 -   Format daty i godziny będzie ujednolicony w całej aplikacji (`DD.MM.RRRR HH:MM`).
 
+### 3.5. Generowanie Raportu AI
+-   Użytkownik ma możliwość wygenerowania inteligentnego raportu tekstowego dotyczącego symptomów z wybranego okresu czasu.
+-   Raport jest generowany automatycznie przez model AI na podstawie zapisanych danych o symptomach.
+-   Funkcjonalność dostępna jest przez dedykowany przycisk "Generuj raport" w głównym widoku aplikacji.
+-   Użytkownik może wybrać:
+    -   Okres analizy (np. ostatni tydzień, miesiąc, 3 miesiące).
+    -   Raport domyślnie analizuje ostatni miesiąc.
+-   Raport zawiera:
+    -   Podsumowanie obecnych symptomów z wybranego okresu (częstotliwość występowania, lokalizacje, wzorce).
+    -   Porównanie z okresem poprzednim o takiej samej długości (np. jeśli wybrano ostatni miesiąc, porównanie z miesiącem poprzednim).
+    -   Analizę trendów: czy objawy się nasilają, stabilizują czy zmniejszają.
+    -   Identyfikację nowych symptomów, które nie występowały w poprzednim okresie.
+    -   Statystyki liczbowe: całkowita liczba zgłoszonych symptomów w obu okresach.
+-   Podczas generowania raportu wyświetlany jest wskaźnik ładowania z informacją o trwającym procesie.
+-   Wygenerowany raport wyświetlany jest w czytelnym formacie tekstowym w oknie modalnym lub na dedykowanej stronie.
+-   Użytkownik może skopiować raport do schowka lub pobrać jako plik tekstowy.
+-   W przypadku braku wystarczających danych do wygenerowania pełnego raportu, system informuje użytkownika o tym fakcie.
+
 ## 4. Granice produktu
 
 ### 4.1. W zakresie MVP
@@ -45,6 +63,7 @@ Pacjenci ze stwardnieniem rozsianym często doświadczają różnorodnych i zmie
 -   Operacje CRUD na wpisach dotyczących symptomów.
 -   Sortowanie listy symptomów chronologicznie (od najnowszych).
 -   Filtrowanie listy według daty, typu symptomu i części ciała.
+-   Generowanie inteligentnego raportu AI z analizą symptomów i porównaniem okresów.
 -   Aplikacja webowa działająca w przeglądarce.
 
 ### 4.2. Poza zakresem MVP
@@ -152,3 +171,22 @@ Pacjenci ze stwardnieniem rozsianym często doświadczają różnorodnych i zmie
     2.  Po kliknięciu tej opcji, system prosi o ostateczne potwierdzenie, informując o nieodwracalności tej akcji.
     3.  Po potwierdzeniu, moje konto oraz wszystkie powiązane z nim symptomy są trwale usuwane z bazy danych.
     4.  Jestem automatycznie wylogowywany i nie mogę się już zalogować na to konto.
+
+---
+-   ID: US-010
+-   Tytuł: Generowanie raportu AI o symptomach
+-   Opis: Jako użytkownik, chcę móc wygenerować inteligentny raport tekstowy o moich symptomach z wybranego okresu, aby lepiej zrozumieć przebieg mojej choroby i przygotować się do konsultacji lekarskiej.
+-   Kryteria akceptacji:
+    1.  Na głównym ekranie znajduje się przycisk "Generuj raport", który otwiera okno z opcjami generowania.
+    2.  Mogę wybrać okres analizy (ostatni tydzień, miesiąc, 3 miesiące) lub wybrać domyślną wartość (ostatni miesiąc).
+    3.  Po kliknięciu "Generuj", system wyświetla wskaźnik ładowania z informacją o trwającym procesie.
+    4.  Wygenerowany raport zawiera:
+        -   Podsumowanie symptomów z wybranego okresu (typy, częstotliwość, lokalizacje).
+        -   Porównanie z okresem poprzednim (np. ostatni miesiąc vs. poprzedni miesiąc).
+        -   Analizę trendów (nasilenie, stabilizacja, zmniejszenie objawów).
+        -   Informację o nowych symptomach, które nie występowały wcześniej.
+        -   Statystyki liczbowe dla obu okresów.
+    5.  Raport jest prezentowany w czytelnym formacie tekstowym.
+    6.  Mam możliwość skopiowania raportu do schowka lub pobrania jako plik tekstowy.
+    7.  Jeśli nie mam wystarczających danych, system informuje mnie o tym i sugeruje zapisanie większej liczby symptomów.
+    8.  Po zamknięciu raportu wracam do głównego widoku aplikacji.
