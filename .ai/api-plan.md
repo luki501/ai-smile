@@ -156,7 +156,9 @@
 
 ### Report Endpoints
 
-> **Implementation Status**: ✅ `POST /api/reports` implemented (2025-10-31)
+> **Implementation Status**: 
+> - ✅ `POST /api/reports` implemented (2025-10-31)
+> - ✅ `GET /api/reports` implemented (2025-10-31)
 
 #### `POST /api/reports`
 

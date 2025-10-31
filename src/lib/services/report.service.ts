@@ -365,3 +365,69 @@ export async function generateReport(
 	return report;
 }
 
+/**
+ * Fetches a paginated list of reports for a specific user.
+ * Reports are sorted by creation date (newest first) and can be optionally filtered by period type.
+ *
+ * @param supabase - Supabase client instance with user context
+ * @param userId - The ID of the user whose reports to fetch
+ * @param offset - Number of records to skip (for pagination)
+ * @param limit - Maximum number of records to return
+ * @param periodType - Optional filter for period type ('week', 'month', 'quarter')
+ * @returns Object containing array of reports and total count
+ * @throws Error if the database query fails
+ *
+ * @example
+ * const result = await fetchReports(supabase, userId, 0, 10, 'month');
+ * console.log(`Found ${result.totalCount} reports, showing ${result.reports.length}`);
+ */
+export async function fetchReports(
+	supabase: SupabaseClient,
+	userId: string,
+	offset: number,
+	limit: number,
+	periodType?: PeriodType,
+): Promise<{ reports: Report[]; totalCount: number }> {
+	// Build query for fetching reports
+	let query = supabase
+		.from('reports')
+		.select('*')
+		.eq('user_id', userId)
+		.order('created_at', { ascending: false })
+		.range(offset, offset + limit - 1);
+
+	// Apply optional period_type filter
+	if (periodType) {
+		query = query.eq('period_type', periodType);
+	}
+
+	const { data, error } = await query;
+
+	if (error) {
+		console.error('Failed to fetch reports:', error);
+		throw new Error(`Failed to fetch reports: ${error.message}`);
+	}
+
+	// Build query for count (same filters, no pagination)
+	let countQuery = supabase
+		.from('reports')
+		.select('*', { count: 'exact', head: true })
+		.eq('user_id', userId);
+
+	if (periodType) {
+		countQuery = countQuery.eq('period_type', periodType);
+	}
+
+	const { count, error: countError } = await countQuery;
+
+	if (countError) {
+		console.error('Failed to count reports:', countError);
+		throw new Error(`Failed to count reports: ${countError.message}`);
+	}
+
+	return {
+		reports: data || [],
+		totalCount: count || 0,
+	};
+}
+

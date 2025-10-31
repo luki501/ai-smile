@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
-import { createReportSchema } from '@/lib/reports/report.validators';
-import { generateReport } from '@/lib/services/report.service';
+import { createReportSchema, ReportQueryParamsSchema } from '@/lib/reports/report.validators';
+import { generateReport, fetchReports } from '@/lib/services/report.service';
+import type { ReportListResponseDto } from '@/types';
 
 export const prerender = false;
 
@@ -137,6 +138,94 @@ export const POST: APIRoute = async (context) => {
 				message: 'Failed to generate report',
 			}),
 			{ status: 500, headers: { 'Content-Type': 'application/json' } },
+		);
+	}
+};
+
+/**
+ * GET /api/reports
+ * 
+ * Retrieves a paginated list of reports for the authenticated user.
+ * Reports are sorted by creation date (newest first).
+ * 
+ * Query Parameters:
+ * - offset (optional, default: 0): Number of records to skip
+ * - limit (optional, default: 10, max: 100): Maximum number of records to return
+ * - period_type (optional): Filter by period type ('week', 'month', 'quarter')
+ * 
+ * Response (200 OK):
+ * {
+ *   "data": [ {...report objects...} ],
+ *   "count": <total number of reports>
+ * }
+ * 
+ * Error Responses:
+ * - 400: Bad Request - Invalid query parameters
+ * - 401: Unauthorized - Missing or invalid JWT
+ * - 500: Internal Server Error - Server error
+ */
+export const GET: APIRoute = async (context) => {
+	// 1. Check authentication - early return if not authenticated
+	const session = await context.locals.supabase.auth.getSession();
+	
+	if (!session.data.session) {
+		return new Response(
+			JSON.stringify({ error: 'Unauthorized' }),
+			{ status: 401, headers: { 'Content-Type': 'application/json' } }
+		);
+	}
+
+	const userId = session.data.session.user.id;
+	const url = context.url;
+
+	// 2. Parse and validate query parameters - early return if validation fails
+	const validationResult = ReportQueryParamsSchema.safeParse({
+		offset: url.searchParams.get('offset') ?? undefined,
+		limit: url.searchParams.get('limit') ?? undefined,
+		period_type: url.searchParams.get('period_type') ?? undefined,
+	});
+
+	if (!validationResult.success) {
+		console.warn('Invalid query parameters:', validationResult.error.format());
+		return new Response(
+			JSON.stringify({
+				error: 'Invalid query parameters',
+				details: validationResult.error.format(),
+			}),
+			{ status: 400, headers: { 'Content-Type': 'application/json' } }
+		);
+	}
+
+	const { offset, limit, period_type } = validationResult.data;
+
+	// 3. Fetch reports from database with error handling
+	try {
+		const result = await fetchReports(
+			context.locals.supabase,
+			userId,
+			offset,
+			limit,
+			period_type,
+		);
+
+		// 4. Format response according to ReportListResponseDto
+		const response: ReportListResponseDto = {
+			data: result.reports,
+			count: result.totalCount,
+		};
+
+		return new Response(
+			JSON.stringify(response),
+			{ 
+				status: 200, 
+				headers: { 'Content-Type': 'application/json' } 
+			}
+		);
+	} catch (error) {
+		console.error('Failed to fetch reports:', error);
+		return new Response(
+			JSON.stringify({ error: 'Failed to fetch reports' }),
+			{ status: 500, headers: { 'Content-Type': 'application/json' } }
 		);
 	}
 };
