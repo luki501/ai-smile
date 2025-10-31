@@ -1,0 +1,46 @@
+---
+export const prerender = false;
+
+import { getReportById } from "@/lib/services/report.service";
+import Layout from "@/layouts/Layout.astro";
+import ReportViewer from "@/components/reports/ReportViewer";
+
+const { locals, params, redirect } = Astro;
+
+// Check authentication
+const session = await locals.safeGetSession();
+if (!session?.user) {
+  return redirect("/");
+}
+
+// Validate and parse report ID
+const { id } = params;
+const reportId = parseInt(id!, 10);
+
+if (isNaN(reportId)) {
+  return new Response("Invalid report ID", { status: 400 });
+}
+
+// Fetch report from database
+let report;
+try {
+  report = await getReportById(locals.supabase, reportId, session.user.id);
+} catch (error) {
+  console.error("Error fetching report:", error);
+  return new Response("Failed to fetch report", { status: 500 });
+}
+
+// Handle report not found or access denied
+if (!report) {
+  return new Response("Report not found or you don't have permission to access it", {
+    status: 404,
+  });
+}
+---
+
+<Layout title={`Raport ${reportId}`}>
+  <main class="container mx-auto max-w-5xl px-4 py-8">
+    <ReportViewer report={report} client:load />
+  </main>
+</Layout>
+
