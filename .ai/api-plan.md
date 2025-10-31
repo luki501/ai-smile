@@ -160,6 +160,7 @@
 > - ✅ `POST /api/reports` implemented (2025-10-31)
 > - ✅ `GET /api/reports` implemented (2025-10-31)
 > - ✅ `GET /api/reports/{id}` implemented (2025-10-31)
+> - ✅ `DELETE /api/reports/{id}` implemented (2025-10-31)
 
 #### `POST /api/reports`
 
@@ -256,16 +257,18 @@
 
 #### `DELETE /api/reports/{id}`
 
-- **Description**: Deletes a specific report. Allows users to manage their report history and remove outdated analyses.
+- **Description**: Deletes a specific report for the authenticated user. Allows users to manage their report history and remove outdated analyses. This is an irreversible operation that performs authorization checks to ensure the user owns the report before deletion.
 - **URL Parameters**:
-  - `id` (number, required): The ID of the report to delete.
+  - `id` (number, required): The ID of the report to delete. Must be a positive integer.
 - **Request Payload**: N/A
 - **Response Payload**: N/A
 - **Success Response**: `204 No Content`
 - **Error Responses**:
+  - `400 Bad Request`: Invalid report ID format (e.g., non-numeric, negative, or decimal values).
   - `401 Unauthorized`: User is not authenticated.
-  - `403 Forbidden`: User does not have permission to delete this report.
+  - `403 Forbidden`: User does not have permission to delete this report (report belongs to another user).
   - `404 Not Found`: Report with the given ID does not exist.
+  - `500 Internal Server Error`: Unexpected server error during report deletion.
 
 ---
 

@@ -1,21 +1,21 @@
-import type { SupabaseClient } from '@/db/supabase.client';
-import type { PeriodType, Report, Symptom } from '@/types';
+import type { SupabaseClient } from "@/db/supabase.client";
+import type { PeriodType, Report, Symptom } from "@/types";
 
 /**
  * Interface representing the date ranges for current and previous periods.
  */
 interface PeriodDates {
-	current_start: Date;
-	current_end: Date;
-	previous_start: Date;
-	previous_end: Date;
+  current_start: Date;
+  current_end: Date;
+  previous_start: Date;
+  previous_end: Date;
 }
 
 /**
  * Interface for AI service response containing generated content.
  */
 interface AIServiceResponse {
-	content: string;
+  content: string;
 }
 
 /**
@@ -45,34 +45,32 @@ const AI_REQUEST_TIMEOUT = 30000;
  * // Returns dates for current month and previous month
  */
 export function calculatePeriodDates(periodType: PeriodType): PeriodDates {
-	const now = new Date();
-	const currentEnd = now;
+  const now = new Date();
+  const currentEnd = now;
 
-	let daysBack: number;
-	switch (periodType) {
-		case 'week':
-			daysBack = 7;
-			break;
-		case 'month':
-			daysBack = 30;
-			break;
-		case 'quarter':
-			daysBack = 90;
-			break;
-	}
+  let daysBack: number;
+  switch (periodType) {
+    case "week":
+      daysBack = 7;
+      break;
+    case "month":
+      daysBack = 30;
+      break;
+    case "quarter":
+      daysBack = 90;
+      break;
+  }
 
-	const currentStart = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
-	const previousEnd = new Date(currentStart.getTime() - 1);
-	const previousStart = new Date(
-		previousEnd.getTime() - daysBack * 24 * 60 * 60 * 1000,
-	);
+  const currentStart = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+  const previousEnd = new Date(currentStart.getTime() - 1);
+  const previousStart = new Date(previousEnd.getTime() - daysBack * 24 * 60 * 60 * 1000);
 
-	return {
-		current_start: currentStart,
-		current_end: currentEnd,
-		previous_start: previousStart,
-		previous_end: previousEnd,
-	};
+  return {
+    current_start: currentStart,
+    current_end: currentEnd,
+    previous_start: previousStart,
+    previous_end: previousEnd,
+  };
 }
 
 /**
@@ -86,25 +84,25 @@ export function calculatePeriodDates(periodType: PeriodType): PeriodDates {
  * @throws Error if the database query fails
  */
 export async function fetchSymptomsForPeriod(
-	supabase: SupabaseClient,
-	userId: string,
-	startDate: Date,
-	endDate: Date,
+  supabase: SupabaseClient,
+  userId: string,
+  startDate: Date,
+  endDate: Date
 ): Promise<Symptom[]> {
-	const { data, error } = await supabase
-		.from('symptoms')
-		.select('*')
-		.eq('user_id', userId)
-		.gte('occurred_at', startDate.toISOString())
-		.lte('occurred_at', endDate.toISOString())
-		.order('occurred_at', { ascending: false });
+  const { data, error } = await supabase
+    .from("symptoms")
+    .select("*")
+    .eq("user_id", userId)
+    .gte("occurred_at", startDate.toISOString())
+    .lte("occurred_at", endDate.toISOString())
+    .order("occurred_at", { ascending: false });
 
-	if (error) {
-		console.error('Failed to fetch symptoms:', error);
-		throw new Error(`Failed to fetch symptoms: ${error.message}`);
-	}
+  if (error) {
+    console.error("Failed to fetch symptoms:", error);
+    throw new Error(`Failed to fetch symptoms: ${error.message}`);
+  }
 
-	return data || [];
+  return data || [];
 }
 
 /**
@@ -118,32 +116,24 @@ export async function fetchSymptomsForPeriod(
  * @returns Formatted prompt string for the AI service
  */
 export function buildReportPrompt(
-	periodType: PeriodType,
-	currentSymptoms: Symptom[],
-	previousSymptoms: Symptom[],
-	dates: PeriodDates,
+  periodType: PeriodType,
+  currentSymptoms: Symptom[],
+  previousSymptoms: Symptom[],
+  dates: PeriodDates
 ): string {
-	const formatSymptoms = (symptoms: Symptom[]) => {
-		return symptoms
-			.map((s) => {
-				const notes = s.notes
-					? ` (Notatki: ${s.notes.slice(0, 200)})`
-					: '';
-				return `- ${s.occurred_at}: ${s.symptom_type} w ${s.body_part}${notes}`;
-			})
-			.join('\n');
-	};
+  const formatSymptoms = (symptoms: Symptom[]) => {
+    return symptoms
+      .map((s) => {
+        const notes = s.notes ? ` (Notatki: ${s.notes.slice(0, 200)})` : "";
+        return `- ${s.occurred_at}: ${s.symptom_type} w ${s.body_part}${notes}`;
+      })
+      .join("\n");
+  };
 
-	const currentSymptomsForPrompt = currentSymptoms.slice(
-		0,
-		MAX_SYMPTOMS_IN_PROMPT,
-	);
-	const previousSymptomsForPrompt = previousSymptoms.slice(
-		0,
-		MAX_SYMPTOMS_IN_PROMPT,
-	);
+  const currentSymptomsForPrompt = currentSymptoms.slice(0, MAX_SYMPTOMS_IN_PROMPT);
+  const previousSymptomsForPrompt = previousSymptoms.slice(0, MAX_SYMPTOMS_IN_PROMPT);
 
-	const prompt = `Jesteś analitykiem danych medycznych specjalizującym się w analizie objawów stwardnienia rozsianego (SM).
+  const prompt = `Jesteś analitykiem danych medycznych specjalizującym się w analizie objawów stwardnienia rozsianego (SM).
 
 Przeanalizuj poniższe dane objawów i wygeneruj kompleksowy raport w języku polskim.
 
@@ -152,14 +142,14 @@ Całkowita liczba zapisanych objawów: ${currentSymptoms.length}
 
 Objawy:
 ${formatSymptoms(currentSymptomsForPrompt)}
-${currentSymptoms.length > MAX_SYMPTOMS_IN_PROMPT ? `\n(Pokazano ${MAX_SYMPTOMS_IN_PROMPT} z ${currentSymptoms.length} objawów)` : ''}
+${currentSymptoms.length > MAX_SYMPTOMS_IN_PROMPT ? `\n(Pokazano ${MAX_SYMPTOMS_IN_PROMPT} z ${currentSymptoms.length} objawów)` : ""}
 
 **Okres poprzedni (${periodType})**: ${dates.previous_start.toISOString()} do ${dates.previous_end.toISOString()}
 Całkowita liczba zapisanych objawów: ${previousSymptoms.length}
 
 Objawy:
 ${formatSymptoms(previousSymptomsForPrompt)}
-${previousSymptoms.length > MAX_SYMPTOMS_IN_PROMPT ? `\n(Pokazano ${MAX_SYMPTOMS_IN_PROMPT} z ${previousSymptoms.length} objawów)` : ''}
+${previousSymptoms.length > MAX_SYMPTOMS_IN_PROMPT ? `\n(Pokazano ${MAX_SYMPTOMS_IN_PROMPT} z ${previousSymptoms.length} objawów)` : ""}
 
 Wygeneruj raport w języku polskim zawierający:
 1. **Podsumowanie objawów z bieżącego okresu** - częstotliwość, typy, lokalizacje, wzorce czasowe
@@ -170,7 +160,7 @@ Wygeneruj raport w języku polskim zawierający:
 
 Formatuj raport używając składni Markdown z odpowiednimi sekcjami. Używaj jasnego, przyjaznego dla pacjenta języka, ale zachowaj profesjonalny ton medyczny. Bądź empatyczny i wspierający w swoim tonie.`;
 
-	return prompt;
+  return prompt;
 }
 
 /**
@@ -183,78 +173,73 @@ Formatuj raport używając składni Markdown z odpowiednimi sekcjami. Używaj ja
  *   - 'REQUEST_TIMEOUT' - Request exceeded timeout limit
  *   - Generic error message for other failures
  */
-export async function generateAIReport(
-	prompt: string,
-): Promise<AIServiceResponse> {
-	const OPENROUTER_API_KEY = import.meta.env.OPENROUTER_API_KEY;
+export async function generateAIReport(prompt: string): Promise<AIServiceResponse> {
+  const OPENROUTER_API_KEY = import.meta.env.OPENROUTER_API_KEY;
 
-	if (!OPENROUTER_API_KEY) {
-		console.error('OPENROUTER_API_KEY is not configured');
-		throw new Error('OPENROUTER_API_KEY is not configured');
-	}
+  if (!OPENROUTER_API_KEY) {
+    console.error("OPENROUTER_API_KEY is not configured");
+    throw new Error("OPENROUTER_API_KEY is not configured");
+  }
 
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT);
 
-	try {
-		const response = await fetch(
-			'https://openrouter.ai/api/v1/chat/completions',
-			{
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					model: 'openai/gpt-4o-mini',
-					messages: [
-						{
-							role: 'system',
-							content:
-								'Jesteś analitykiem danych medycznych specjalizującym się w analizie objawów stwardnienia rozsianego. Tworzysz jasne, empatyczne i informacyjne raporty w języku polskim dla pacjentów.',
-						},
-						{
-							role: 'user',
-							content: prompt,
-						},
-					],
-				}),
-				signal: controller.signal,
-			},
-		);
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Jesteś analitykiem danych medycznych specjalizującym się w analizie objawów stwardnienia rozsianego. Tworzysz jasne, empatyczne i informacyjne raporty w języku polskim dla pacjentów.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      }),
+      signal: controller.signal,
+    });
 
-		clearTimeout(timeoutId);
+    clearTimeout(timeoutId);
 
-		if (!response.ok) {
-			if (response.status === 503 || response.status === 429) {
-				console.error('OpenRouter service unavailable:', response.status);
-				throw new Error('SERVICE_UNAVAILABLE');
-			}
-			console.error('OpenRouter API error:', response.status);
-			throw new Error(`OpenRouter API error: ${response.status}`);
-		}
+    if (!response.ok) {
+      if (response.status === 503 || response.status === 429) {
+        console.error("OpenRouter service unavailable:", response.status);
+        throw new Error("SERVICE_UNAVAILABLE");
+      }
+      console.error("OpenRouter API error:", response.status);
+      throw new Error(`OpenRouter API error: ${response.status}`);
+    }
 
-		const data = await response.json();
-		const content = data.choices?.[0]?.message?.content;
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
 
-		if (!content || content.trim().length === 0) {
-			console.error('Empty response from AI service');
-			throw new Error('Empty response from AI service');
-		}
+    if (!content || content.trim().length === 0) {
+      console.error("Empty response from AI service");
+      throw new Error("Empty response from AI service");
+    }
 
-		return { content };
-	} catch (error) {
-		if (error instanceof Error) {
-			if (error.name === 'AbortError') {
-				console.error('AI request timeout');
-				throw new Error('REQUEST_TIMEOUT');
-			}
-			throw error;
-		}
-		throw new Error('Unknown error during AI report generation');
-	} finally {
-		clearTimeout(timeoutId);
-	}
+    return { content };
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === "AbortError") {
+        console.error("AI request timeout");
+        throw new Error("REQUEST_TIMEOUT");
+      }
+      throw error;
+    }
+    throw new Error("Unknown error during AI report generation");
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**
@@ -269,30 +254,30 @@ export async function generateAIReport(
  * @throws Error if the database insert operation fails
  */
 export async function saveReport(
-	supabase: SupabaseClient,
-	userId: string,
-	content: string,
-	periodType: PeriodType,
-	dates: PeriodDates,
+  supabase: SupabaseClient,
+  userId: string,
+  content: string,
+  periodType: PeriodType,
+  dates: PeriodDates
 ): Promise<Report> {
-	const { data, error } = await supabase
-		.from('reports')
-		.insert({
-			user_id: userId,
-			content,
-			period_type: periodType,
-			period_start: dates.current_start.toISOString(),
-			period_end: dates.current_end.toISOString(),
-		})
-		.select()
-		.single();
+  const { data, error } = await supabase
+    .from("reports")
+    .insert({
+      user_id: userId,
+      content,
+      period_type: periodType,
+      period_start: dates.current_start.toISOString(),
+      period_end: dates.current_end.toISOString(),
+    })
+    .select()
+    .single();
 
-	if (error) {
-		console.error('Failed to save report to database:', error);
-		throw new Error(`Failed to save report: ${error.message}`);
-	}
+  if (error) {
+    console.error("Failed to save report to database:", error);
+    throw new Error(`Failed to save report: ${error.message}`);
+  }
 
-	return data;
+  return data;
 }
 
 /**
@@ -315,54 +300,39 @@ export async function saveReport(
  *   - Other errors from underlying functions
  */
 export async function generateReport(
-	supabase: SupabaseClient,
-	userId: string,
-	periodType: PeriodType,
+  supabase: SupabaseClient,
+  userId: string,
+  periodType: PeriodType
 ): Promise<Report> {
-	// 1. Calculate period dates
-	const dates = calculatePeriodDates(periodType);
+  // 1. Calculate period dates
+  const dates = calculatePeriodDates(periodType);
 
-	// 2. Fetch symptoms for both periods in parallel
-	const [currentSymptoms, previousSymptoms] = await Promise.all([
-		fetchSymptomsForPeriod(
-			supabase,
-			userId,
-			dates.current_start,
-			dates.current_end,
-		),
-		fetchSymptomsForPeriod(
-			supabase,
-			userId,
-			dates.previous_start,
-			dates.previous_end,
-		),
-	]);
+  // 2. Fetch symptoms for both periods in parallel
+  const [currentSymptoms, previousSymptoms] = await Promise.all([
+    fetchSymptomsForPeriod(supabase, userId, dates.current_start, dates.current_end),
+    fetchSymptomsForPeriod(supabase, userId, dates.previous_start, dates.previous_end),
+  ]);
 
-	// 3. Validate sufficient data
-	if (currentSymptoms.length < MIN_SYMPTOMS_REQUIRED) {
-		console.warn(
-			`User ${userId} attempted to generate report with insufficient data: ${currentSymptoms.length} symptoms`,
-		);
-		throw new Error('INSUFFICIENT_DATA');
-	}
+  // 3. Validate sufficient data
+  if (currentSymptoms.length < MIN_SYMPTOMS_REQUIRED) {
+    console.warn(
+      `User ${userId} attempted to generate report with insufficient data: ${currentSymptoms.length} symptoms`
+    );
+    throw new Error("INSUFFICIENT_DATA");
+  }
 
-	// 4. Build AI prompt
-	const prompt = buildReportPrompt(
-		periodType,
-		currentSymptoms,
-		previousSymptoms,
-		dates,
-	);
+  // 4. Build AI prompt
+  const prompt = buildReportPrompt(periodType, currentSymptoms, previousSymptoms, dates);
 
-	// 5. Generate report via AI
-	const { content } = await generateAIReport(prompt);
+  // 5. Generate report via AI
+  const { content } = await generateAIReport(prompt);
 
-	// 6. Save report to database
-	const report = await saveReport(supabase, userId, content, periodType, dates);
+  // 6. Save report to database
+  const report = await saveReport(supabase, userId, content, periodType, dates);
 
-	console.log(`Successfully generated report ${report.id} for user ${userId}`);
+  console.log(`Successfully generated report ${report.id} for user ${userId}`);
 
-	return report;
+  return report;
 }
 
 /**
@@ -376,27 +346,22 @@ export async function generateReport(
  * @throws Error if database query fails
  */
 export async function getReportById(
-	supabase: SupabaseClient,
-	reportId: number,
-	userId: string,
+  supabase: SupabaseClient,
+  reportId: number,
+  userId: string
 ): Promise<Report | null> {
-	const { data, error } = await supabase
-		.from('reports')
-		.select('*')
-		.eq('id', reportId)
-		.eq('user_id', userId)
-		.single();
+  const { data, error } = await supabase.from("reports").select("*").eq("id", reportId).eq("user_id", userId).single();
 
-	if (error) {
-		// Supabase returns PGRST116 error for not found
-		if (error.code === 'PGRST116') {
-			return null;
-		}
-		console.error('Failed to fetch report:', error);
-		throw new Error(`Failed to fetch report: ${error.message}`);
-	}
+  if (error) {
+    // Supabase returns PGRST116 error for not found
+    if (error.code === "PGRST116") {
+      return null;
+    }
+    console.error("Failed to fetch report:", error);
+    throw new Error(`Failed to fetch report: ${error.message}`);
+  }
 
-	return data;
+  return data;
 }
 
 /**
@@ -408,26 +373,19 @@ export async function getReportById(
  * @returns True if report exists, false otherwise
  * @throws Error if database query fails
  */
-export async function checkReportExists(
-	supabase: SupabaseClient,
-	reportId: number,
-): Promise<boolean> {
-	const { data, error } = await supabase
-		.from('reports')
-		.select('id')
-		.eq('id', reportId)
-		.single();
+export async function checkReportExists(supabase: SupabaseClient, reportId: number): Promise<boolean> {
+  const { data, error } = await supabase.from("reports").select("id").eq("id", reportId).single();
 
-	if (error) {
-		// PGRST116 means not found, which is expected
-		if (error.code === 'PGRST116') {
-			return false;
-		}
-		console.error('Failed to check report existence:', error);
-		throw new Error(`Failed to check report existence: ${error.message}`);
-	}
+  if (error) {
+    // PGRST116 means not found, which is expected
+    if (error.code === "PGRST116") {
+      return false;
+    }
+    console.error("Failed to check report existence:", error);
+    throw new Error(`Failed to check report existence: ${error.message}`);
+  }
 
-	return !!data;
+  return !!data;
 }
 
 /**
@@ -447,52 +405,91 @@ export async function checkReportExists(
  * console.log(`Found ${result.totalCount} reports, showing ${result.reports.length}`);
  */
 export async function fetchReports(
-	supabase: SupabaseClient,
-	userId: string,
-	offset: number,
-	limit: number,
-	periodType?: PeriodType,
+  supabase: SupabaseClient,
+  userId: string,
+  offset: number,
+  limit: number,
+  periodType?: PeriodType
 ): Promise<{ reports: Report[]; totalCount: number }> {
-	// Build query for fetching reports
-	let query = supabase
-		.from('reports')
-		.select('*')
-		.eq('user_id', userId)
-		.order('created_at', { ascending: false })
-		.range(offset, offset + limit - 1);
+  // Build query for fetching reports
+  let query = supabase
+    .from("reports")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
-	// Apply optional period_type filter
-	if (periodType) {
-		query = query.eq('period_type', periodType);
-	}
+  // Apply optional period_type filter
+  if (periodType) {
+    query = query.eq("period_type", periodType);
+  }
 
-	const { data, error } = await query;
+  const { data, error } = await query;
 
-	if (error) {
-		console.error('Failed to fetch reports:', error);
-		throw new Error(`Failed to fetch reports: ${error.message}`);
-	}
+  if (error) {
+    console.error("Failed to fetch reports:", error);
+    throw new Error(`Failed to fetch reports: ${error.message}`);
+  }
 
-	// Build query for count (same filters, no pagination)
-	let countQuery = supabase
-		.from('reports')
-		.select('*', { count: 'exact', head: true })
-		.eq('user_id', userId);
+  // Build query for count (same filters, no pagination)
+  let countQuery = supabase.from("reports").select("*", { count: "exact", head: true }).eq("user_id", userId);
 
-	if (periodType) {
-		countQuery = countQuery.eq('period_type', periodType);
-	}
+  if (periodType) {
+    countQuery = countQuery.eq("period_type", periodType);
+  }
 
-	const { count, error: countError } = await countQuery;
+  const { count, error: countError } = await countQuery;
 
-	if (countError) {
-		console.error('Failed to count reports:', countError);
-		throw new Error(`Failed to count reports: ${countError.message}`);
-	}
+  if (countError) {
+    console.error("Failed to count reports:", countError);
+    throw new Error(`Failed to count reports: ${countError.message}`);
+  }
 
-	return {
-		reports: data || [],
-		totalCount: count || 0,
-	};
+  return {
+    reports: data || [],
+    totalCount: count || 0,
+  };
 }
 
+/**
+ * Deletes a specific report for a user.
+ * Performs authorization checks to ensure the user owns the report before deletion.
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - The ID of the authenticated user
+ * @param reportId - The ID of the report to delete
+ * @throws Error with specific message codes:
+ *   - 'REPORT_NOT_FOUND' - Report doesn't exist
+ *   - 'FORBIDDEN' - Report belongs to another user
+ *   - Other errors for database failures
+ */
+export async function deleteReport(supabase: SupabaseClient, userId: string, reportId: number): Promise<void> {
+  // 1. Fetch the report to verify ownership
+  const { data: report, error: fetchError } = await supabase
+    .from("reports")
+    .select("id, user_id")
+    .eq("id", reportId)
+    .single();
+
+  // 2. Check if report exists
+  if (fetchError || !report) {
+    console.log(`Report ${reportId} not found`);
+    throw new Error("REPORT_NOT_FOUND");
+  }
+
+  // 3. Verify ownership (authorization)
+  if (report.user_id !== userId) {
+    console.warn(`User ${userId} attempted to delete report ${reportId} owned by ${report.user_id}`);
+    throw new Error("FORBIDDEN");
+  }
+
+  // 4. Delete the report
+  const { error: deleteError } = await supabase.from("reports").delete().eq("id", reportId).eq("user_id", userId); // Additional safety check at query level
+
+  if (deleteError) {
+    console.error("Failed to delete report:", deleteError);
+    throw new Error(`Failed to delete report: ${deleteError.message}`);
+  }
+
+  console.log(`Successfully deleted report ${reportId} for user ${userId}`);
+}
