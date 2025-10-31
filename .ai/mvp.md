@@ -1,9 +1,10 @@
 ### Główny problem
-Zapisywanie symptomów choroby stwardnienie rozsiane i ich wizualizacja
+Aplikacja przeznaczona dla chorych na stwardnienie rozsiane. Jej celem jest badanie wpływu leków
 
 ### Najmniejszy zestaw funkcjonalności
-- Zapisywanie, edycja i usuwanie symptomu
-- Przeglądanie listy ostatnich symptomów
+- Tworzenie i edycja raportów dziennych
+- Tworzenie i edycja listy leków
+- Tworzenie raportów z użyciem modeli AI
 
 ### Co NIE wchodzi w zakres MVP
 - Import danych z pliku
