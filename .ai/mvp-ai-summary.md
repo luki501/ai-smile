@@ -1,55 +1,344 @@
-<conversation_summary>
-<decisions>
-1.  **Encja Symptomu:** Pojedynczy wpis będzie zawierał: `id`, `user_id`, `created_at` (data i godzina), `symptom_type` (typ), `body_part` (część ciała) i `notes` (notatki). Pola `symptom_type` i `body_part` są obowiązkowe.
-2.  **Predefiniowane Listy:** Wartości dla `symptom_type` ('Tingle', 'Numbness', 'Cramps', 'FuckedUp') i `body_part` ('head', 'hands', 'legs', 'neck', 'back', 'arms') są stałe i niezmienne dla użytkownika w MVP.
-3.  **Uwierzytelnianie:** Wdrożony zostanie prosty system uwierzytelniania (e-mail/hasło) oparty o Supabase Auth. Obejmuje to rejestrację, logowanie, funkcję "zapomniałem hasła" oraz możliwość usunięcia konta przez użytkownika. Po rejestracji użytkownik jest automatycznie logowany.
-4.  **Lista Symptomów:** Główny ekran aplikacji będzie wyświetlał listę symptomów posortowaną od najnowszego. Zastosowany zostanie "infinite scroll" do ładowania starszych wpisów.
-5.  **Filtrowanie:** Lista będzie filtrowana według: liczby ostatnich rekordów (domyślnie 10), zakresu dat, typu symptomu (pojedynczy wybór) i części ciała (pojedynczy wybór). Filtry będą zawsze widoczne nad listą i będzie dostępny przycisk do ich resetowania.
-6.  **Operacje CRUD:** Dodawanie i edycja symptomów odbywać się będzie w tym samym oknie modalnym. Usuwanie wpisu zostanie zabezpieczone oknem dialogowym z potwierdzeniem.
-7.  **UX/UI:** Interfejs będzie responsywny, oparty o komponenty z biblioteki Shadcn/ui. Będą stosowane jasne komunikaty o błędach (toasty), stany ładowania (spinners) i komunikaty o sukcesie. Ton komunikacji ma być wspierający i empatyczny. Data będzie wyświetlana w formacie absolutnym (`DD.MM.RRRR HH:MM`).
-8.  **Funkcjonalności Poza Zakresem MVP:** Wizualizacja danych (wykresy), onboarding użytkownika, zbieranie opinii, mierzenie wskaźników sukcesu oraz funkcje dostępności (accessibility) zostały świadomie pominięte w pierwszej wersji produktu.
-</decisions>
+# Podsumowanie konwersacji: Planowanie PRD dla AI-Smile MVP
 
-<matched_recommendations>
-1.  **Struktura Danych:** Zdefiniowano i zaakceptowano konkretny schemat danych dla symptomu, włączając w to typy `enum` w bazie danych dla kluczowych pól, co zapewni integralność danych.
-2.  **Uwierzytelnianie i Bezpieczeństwo:** Zdecydowano się na wykorzystanie gotowego rozwiązania Supabase Auth, obejmującego kluczowe funkcje bezpieczeństwa, takie jak resetowanie hasła i usuwanie konta.
-3.  **Przepływ Użytkownika (User Flow):** Ustalono spójny i nowoczesny przepływ pracy: główny widok listy, "pływający" przycisk akcji, użycie okien modalnych do edycji/dodawania oraz "infinite scroll" do przeglądania danych.
-4.  **Obsługa Błędów i Stanów:** Zaakceptowano rekomendacje dotyczące informowania użytkownika o stanie aplikacji poprzez wskaźniki ładowania oraz dyskretne powiadomienia (toasty) o sukcesie lub porażce operacji.
-5.  **Spójność Interfejsu:** Podjęto decyzję o konsekwentnym używaniu biblioteki komponentów Shadcn/ui, co zapewni spójność wizualną i przyspieszy rozwój.
-6.  **Zabezpieczenie przed Utratą Danych:** Przyjęto kluczową rekomendację dotyczącą wprowadzenia okna dialogowego z potwierdzeniem przed usunięciem wpisu, co minimalizuje ryzyko przypadkowej utraty danych.
-</matched_recommendations>
+## Decyzje
 
-<prd_planning_summary>
-### **1. Główny Problem i Cel**
-Aplikacja ma na celu rozwiązanie problemu efektywnego zapisywania symptomów choroby stwardnienie rozsiane (SM) przez pacjentów. Celem MVP jest dostarczenie narzędzia do szybkiego i ustrukturyzowanego logowania, przeglądania i filtrowania historii objawów. Wizualizacja danych została przesunięta do kolejnej fazy projektu.
+1. **Grupa docelowa**: Aplikacja przeznaczona dla jednego użytkownika (żony developera), projekt osobisty/akademicki
+2. **Model biznesowy**: Brak monetyzacji, aplikacja lokalna bez komercyjnych aspiracji
+3. **Metryki sukcesu**: Brak formalnych KPI, sukces = działająca aplikacja dla użytkownika końcowego
+4. **Bezpieczeństwo**: Na MVP bez zaawansowanych zabezpieczeń, użycie lokalne
+5. **Struktura raportu dziennego**: Data, lista leków (checkbox przyjęcia), symptomy SM (lista stringów), działania niepożądane (lista stringów), nasilenie ogólne (1-4), samopoczucie (1-4 buźki), waga, ciśnienie (tekstowo: skurczowe/rozkurczowe/puls)
+6. **Model leków**: Nazwa + masa substancji aktywnej, wsparcie dla wielu leków jednocześnie
+7. **Symptomy i działania niepożądane**: Lista stringów, nasilenie zbiorczo w skali 1-4 (nie osobno dla każdego)
+8. **Integracja AI**: Predefiniowana lista modeli (GPT-4o, GPT-4, Claude 3.5 Sonnet) - wybór konkretnych modeli do ustalenia później
+9. **Edycja danych**: Dane historyczne edytowalne, timestamp ostatniej modyfikacji
+10. **Walidacja formularza**: Większość pól opcjonalna (wymagana tylko data), pierwszy raport może być bez listy leków
+11. **Architektura danych**: JSON arrays dla symptomów w kolumnie raportu (uproszczenie dla MVP)
+12. **Wymagania sieciowe**: Aplikacja wymaga połączenia z internetem (brak trybu offline)
+13. **Eksport danych**: Brak funkcji eksportu na MVP
+14. **Refaktoring**: Komponent "Combination" do usunięcia/zastąpienia
 
-### **2. Główne Wymagania Funkcjonalne**
-*   **Zarządzanie Kontem Użytkownika:**
-    *   Rejestracja za pomocą adresu e-mail i hasła.
-    *   Logowanie i automatyczne logowanie po rejestracji.
-    *   Mechanizm resetowania zapomnianego hasła.
-    *   Możliwość trwałego usunięcia konta i wszystkich danych przez użytkownika.
-*   **Zarządzanie Symptomami (CRUD):**
-    *   **Dodawanie:** Użytkownik może dodać nowy symptom poprzez formularz w oknie modalnym, wybierając typ, część ciała i dodając opcjonalne notatki. Data i godzina są domyślnie ustawiane na aktualne, z możliwością edycji.
-    *   **Przeglądanie:** Główny ekran aplikacji to chronologiczna (od najnowszych) lista symptomów, prezentująca datę, typ i część ciała. Lista obsługuje "infinite scroll".
-    *   **Edycja:** Użytkownik może edytować wszystkie pola istniejącego wpisu w tym samym formularzu, który służy do dodawania.
-    *   **Usuwanie:** Użytkownik może usunąć wpis po potwierdzeniu operacji w oknie dialogowym.
-*   **Filtrowanie Danych:**
-    *   Użytkownik ma dostęp do panelu filtrów, który pozwala na zawężenie listy według zakresu dat, typu symptomu oraz części ciała.
-    *   Dostępna jest opcja resetowania wszystkich filtrów do stanu domyślnego.
+## Dopasowane rekomendacje
 
-### **3. Kluczowe Historie Użytkownika (User Stories)**
-*   **Jako pacjent, chcę** założyć konto i bezpiecznie się logować, aby moje dane zdrowotne były prywatne.
-*   **Jako pacjent, chcę** szybko zarejestrować nowy symptom, wybierając jego typ i lokalizację z predefiniowanej listy, aby proces był jak najszybszy.
-*   **Jako pacjent, chcę** przeglądać historię moich symptomów w porządku chronologicznym, aby widzieć najnowsze zdarzenia.
-*   **Jako pacjent, chcę** filtrować moje wpisy po dacie, typie i lokalizacji, aby móc analizować trendy i wzorce.
-*   **Jako pacjent, chcę** mieć możliwość poprawienia lub usunięcia błędnie wprowadzonego wpisu.
+### Funkcjonalność podstawowa
+- **Hybrid approach dla symptomów**: Predefiniowana lista najpopularniejszych symptomów + opcja "Inne" z polem tekstowym
+- **Edytowalne dane historyczne**: Możliwość korekty błędów, timestamp "ostatnia edycja"
+- **Opcjonalność pól**: Tylko data obowiązkowa, reszta opcjonalna (zwiększa prawdopodobieństwo regularnego użycia)
 
-### **4. Kryteria Sukcesu**
-Użytkownik świadomie zdecydował o pominięciu definiowania mierzalnych wskaźników sukcesu na etapie planowania MVP.
-</prd_planning_summary>
+### UI/UX
+- **Layout 3-panelowy**: Navbar (Raporty, Leki, Analizy) → Dashboard z quick stats → Timeline raportów
+- **Buźki dla samopoczucia**: Wizualna skala 1-4 zamiast numerycznej
+- **Minimalistyczny onboarding**: Opcjonalny, możliwość pominięcia
 
-<unresolved_issues>
-1.  **Dostępność (Accessibility, a11y):** Użytkownik świadomie zrezygnował z wdrożenia zasad dostępności w MVP. Jest to istotna kwestia, zwłaszcza w aplikacji o tematyce zdrowotnej, i powinna być ponownie rozważona w przyszłych iteracjach produktu, ponieważ może stanowić barierę dla części użytkowników.
-</unresolved_issues>
-</conversation_summary>
+### Dane medyczne
+- **Predefiniowana lista symptomów SM**: Zmęczenie, Zawroty głowy, Problemy z równowagą, Zaburzenia wzroku, Drętwienie kończyn, Słabość mięśni, Problemy z koordynacją, Ból, Sztywność mięśni, Problemy z pamięcią/koncentracją
+- **Predefiniowana lista działań niepożądanych**: Mdłości, Ból głowy, Problemy żołądkowo-jelitowe, Bezsenność, Wysypka skórna, Nadmierna senność, Utrata apetytu, Inne
+- **Wsparcie wielu leków**: Typowe dla SM (3-10 różnych leków), relacja many-to-many
+
+### Analiza AI
+- **Dedykowana strona /analizy**: Przycisk "Generuj analizę", loading state, wynik jako sformatowany tekst z datą, historia poprzednich analiz
+- **Minimalny próg danych**: Informacja po pierwszym raporcie "Po 7 dniach danych dostępna będzie pierwsza analiza"
+- **Wybór modelu**: Dropdown przy generowaniu, zapisywanie informacji który model użyto
+
+### Wizualizacje
+- **Podstawowe wykresy liniowe**: Waga i ciśnienie w czasie (recharts/chart.js)
+- **Timeline raportów**: Chronologiczna lista z najpóźniejszymi na górze
+
+### Harmonogram implementacji (4 tygodnie)
+1. **Tydzień 1**: Autentykacja basic, model danych, CRUD leków
+2. **Tydzień 2**: CRUD raportów dziennych (pełny formularz)
+3. **Tydzień 3**: Lista/widok raportów, podstawowe filtry, wykresy
+4. **Tydzień 4**: Integracja AI, polish UI, bugfixy
+
+## Szczegółowe podsumowanie planowania PRD
+
+### 1. Główny problem użytkownika
+Pacjentka ze stwardnieniem rozsianym potrzebuje narzędzia do systematycznego śledzenia:
+- Przyjmowanych leków (często 3-10 jednocześnie)
+- Symptomów choroby (zmienność, nasilenie)
+- Działań niepożądanych leków
+- Parametrów zdrowotnych (waga, ciśnienie, samopoczucie)
+- Korelacji między terapią a stanem zdrowia
+
+Celem jest umożliwienie analizy wpływu leków na przebieg choroby z wykorzystaniem AI.
+
+### 2. Kluczowe funkcjonalności MVP
+
+#### A. Zarządzanie lekami
+- CRUD leków z polami: nazwa, masa substancji aktywnej
+- Lista aktywnych leków użytkownika
+- Możliwość przypisania wielu leków do raportu dziennego
+
+#### B. Raporty dzienne
+**Pola raportu:**
+- Data (obowiązkowe)
+- Lista przyjętych leków tego dnia (opcjonalne, checkbox)
+- Symptomy SM - wybór z predefiniowanej listy + "Inne" (opcjonalne)
+- Działania niepożądane - wybór z predefiniowanej listy + "Inne" (opcjonalne)
+- Nasilenie symptomów/działań - skala 1-4 (opcjonalne)
+- Samopoczucie ogólne - buźki 1-4 (opcjonalne)
+- Waga (opcjonalne)
+- Ciśnienie - pole tekstowe "skurczowe/rozkurczowe/puls" (opcjonalne)
+
+**Funkcjonalność:**
+- Tworzenie nowych raportów
+- Edycja historycznych raportów (z timestampem modyfikacji)
+- Widok chronologiczny (timeline)
+- Możliwość utworzenia pierwszego raportu bez istniejącej listy leków
+
+#### C. Analizy AI
+- Dedykowana strona /analizy
+- Dropdown wyboru modelu AI (GPT-4o, GPT-4, Claude 3.5 Sonnet)
+- Przycisk "Generuj analizę" z informacją o liczbie dostępnych dni danych
+- Loading state podczas generowania
+- Wyświetlanie analizy tekstowej w card z datą i użytym modelem
+- Historia poprzednich analiz
+- Minimum 7 dni danych dla pierwszej analizy (komunikat informacyjny)
+
+#### D. Wizualizacje
+- Wykresy liniowe: waga w czasie
+- Wykresy liniowe: ciśnienie w czasie (skurczowe i rozkurczowe)
+- Timeline raportów dziennych
+
+### 3. Kluczowe historie użytkownika
+
+**US1: Dodawanie leku**
+```
+JAKO użytkowniczka
+CHCĘ dodać nowy lek do mojej listy
+ABY móc śledzić jego przyjmowanie i wpływ na zdrowie
+```
+Acceptance Criteria:
+- Formularz z polami: nazwa, masa substancji aktywnej
+- Walidacja: oba pola wymagane
+- Zapisanie do bazy Supabase
+- Przekierowanie do listy leków
+
+**US2: Tworzenie raportu dziennego**
+```
+JAKO użytkowniczka
+CHCĘ stworzyć raport dzienny
+ABY udokumentować mój stan zdrowia i przyjęte leki
+```
+Acceptance Criteria:
+- Formularz z wszystkimi polami raportu
+- Tylko data obowiązkowa, reszta opcjonalna
+- Predefiniowane listy symptomów i działań niepożądanych + opcja "Inne"
+- Checkboxy leków (jeśli istnieją w bazie)
+- Buźki 1-4 dla samopoczucia
+- Skala 1-4 dla nasilenia
+- Możliwość zapisu niepełnego raportu
+
+**US3: Edycja historycznego raportu**
+```
+JAKO użytkowniczka
+CHCĘ poprawić błąd w starym raporcie
+ABY dane były dokładne dla analizy AI
+```
+Acceptance Criteria:
+- Kliknięcie w raport z listy otwiera formularz edycji
+- Wszystkie pola edytowalne
+- Zapisanie timestampu "ostatnia modyfikacja"
+- Komunikat sukcesu po zapisaniu
+
+**US4: Generowanie analizy AI**
+```
+JAKO użytkowniczka
+CHCĘ wygenerować analizę AI moich danych
+ABY zrozumieć korelacje między lekami a objawami
+```
+Acceptance Criteria:
+- Przycisk widoczny po zebraniu min. 7 dni danych
+- Dropdown wyboru modelu AI
+- Loading indicator podczas generowania
+- Wyświetlenie tekstowej analizy w card
+- Zapisanie analizy w historii (data, model, treść)
+- Informacja o koszcie/czasie generowania
+
+**US5: Przeglądanie wykresów**
+```
+JAKO użytkowniczka
+CHCĘ zobaczyć wykresy mojej wagi i ciśnienia
+ABY wizualnie śledzić trendy
+```
+Acceptance Criteria:
+- Wykres liniowy wagi (oś X: data, oś Y: waga)
+- Wykres liniowy ciśnienia (dwie linie: skurczowe, rozkurczowe)
+- Interaktywne tooltips z wartościami
+- Responsywne na różnych ekranach
+
+### 4. Model danych
+
+**Table: medications**
+```typescript
+{
+  id: uuid (PK)
+  name: string
+  active_substance_mass: string
+  created_at: timestamp
+  user_id: uuid (FK) // na MVP zawsze ten sam
+}
+```
+
+**Table: daily_reports**
+```typescript
+{
+  id: uuid (PK)
+  date: date (required, unique per user)
+  medications_taken: uuid[] // array of medication IDs
+  symptoms: string[] // JSON array
+  side_effects: string[] // JSON array
+  severity: integer (1-4, nullable)
+  mood: integer (1-4, nullable)
+  weight: float (nullable)
+  blood_pressure: string (nullable) // format: "120/80/72"
+  created_at: timestamp
+  updated_at: timestamp
+  user_id: uuid (FK)
+}
+```
+
+**Table: ai_analyses**
+```typescript
+{
+  id: uuid (PK)
+  model_used: string // "GPT-4o", "GPT-4", "Claude-3.5-Sonnet"
+  analysis_text: text
+  date_from: date
+  date_to: date
+  generated_at: timestamp
+  user_id: uuid (FK)
+}
+```
+
+### 5. Stack techniczny
+- **Frontend**: Astro 5, React 19, TypeScript 5, Tailwind 4, Shadcn/ui
+- **Backend**: Astro API endpoints, Supabase (PostgreSQL)
+- **AI**: OpenAI API (GPT-4, GPT-4o) / Anthropic API (Claude)
+- **Charts**: Recharts lub Chart.js
+- **Deployment**: Lokalne użycie (development mode)
+
+### 6. Architektura strony
+
+```
+/                          → Dashboard (quick stats, shortcut do nowego raportu)
+/medications               → Lista leków, przycisk "Dodaj lek"
+/medications/new           → Formularz nowego leku
+/reports                   → Timeline raportów dziennych, filtry
+/reports/new               → Formularz nowego raportu
+/reports/[id]              → Edycja istniejącego raportu
+/analyses                  → Historia analiz AI, przycisk "Generuj nową"
+/api/medications           → CRUD endpoints
+/api/reports               → CRUD endpoints
+/api/analyses              → POST /generate, GET /list
+```
+
+### 7. Priorytety implementacyjne
+
+**P0 (Krytyczne - Tydzień 1-2):**
+- Autentykacja basic (email/password, single user)
+- Model danych i migracje Supabase
+- CRUD leków (backend + frontend)
+- CRUD raportów (backend + frontend)
+- Podstawowy routing
+
+**P1 (Wysokie - Tydzień 3):**
+- Timeline/lista raportów
+- Podstawowe wykresy (waga, ciśnienie)
+- Walidacja formularzy
+- Error handling
+
+**P2 (Średnie - Tydzień 4):**
+- Integracja AI (generowanie analiz)
+- Historia analiz
+- UI polish i responsywność
+- Loading states i feedback użytkownika
+
+**P3 (Nice-to-have - Post-MVP):**
+- Zaawansowane filtry i wyszukiwanie
+- Kalendarzowy widok raportów
+- Eksport do CSV/PDF
+- Notyfikacje/przypomnienia
+- Tryb offline (PWA)
+- Dodawanie własnych symptomów do predefiniowanej listy
+
+## Nierozwiązane kwestie
+
+### 1. Szczegóły integracji AI
+**Co wymaga doprecyzowania:**
+- Dokładny wybór modeli AI z listy (GPT-4o, GPT-4, Claude 3.5 Sonnet - które dokładnie?)
+- Struktura promptu dla analizy (jakie konkretnie pytania zadawać?)
+- Sposób formatowania danych wejściowych (JSON, markdown, plain text?)
+- Obsługa błędów API (rate limits, timeouts)
+- Koszty i limity użycia API
+
+**Rekomendacja akcji:** 
+Przed implementacją tygodnia 4, ustal dokładne promptowanie i przetestuj na przykładowych danych.
+
+### 2. Format pola ciśnienia
+**Aktualnie:** Pole tekstowe "skurczowe/rozkurczowe/puls"
+
+**Potencjalny problem:** 
+- Brak walidacji (użytkownik może wpisać cokolwiek)
+- Trudniejsze parsowanie dla wykresów
+- Możliwość błędów formatowania
+
+**Pytanie:** Czy na pewno pole tekstowe, czy jednak rozdzielić na 3 osobne pola numeryczne dla lepszej walidacji?
+
+### 3. Definicja "nasilenia"
+**Aktualne:** Jedna wartość 1-4 dla ogólnego nasilenia symptomów i działań niepożądanych
+
+**Niejasność:** Co dokładnie oznacza ta wartość?
+- Subiektywne odczucie nasilenia wszystkich symptomów łącznie?
+- Najgorszy symptom z listy?
+- Średnia nasilenia?
+
+**Rekomendacja:** Doprecyzuj w UI label i placeholder, np. "Ogólne nasilenie objawów (1-słabe, 4-bardzo silne)"
+
+### 4. Mechanizm "Combination"
+**Status:** Do usunięcia/zastąpienia
+
+**Pytanie:** Czy ten komponent ma zostać po prostu usunięty, czy zastąpiony czymś innym? Jaka była pierwotna funkcjonalność?
+
+### 5. Obsługa pierwszego użycia
+**Decyzja:** Pierwszy raport może być bez listy leków
+
+**Implikacje UX:**
+- Jak wyświetlić sekcję leków w formularzu jeśli lista jest pusta?
+- Czy pokazać komunikat "Najpierw dodaj leki w zakładce Leki"?
+- Czy zablokować checkboxy leków, czy ukryć całą sekcję?
+
+**Rekomendacja:** Pokaż komunikat informacyjny + link do /medications/new
+
+### 6. Autentykacja single-user
+**Aktualnie:** Aplikacja dla jednego użytkownika
+
+**Pytanie techniczne:** 
+- Czy w ogóle implementować logowanie, czy hard-code jednego usera?
+- Jeśli logowanie - czy zabezpieczyć routes przed dostępem bez autentykacji?
+- Czy Supabase auth (email/password) czy prostszy mechanizm?
+
+**Rekomendacja dla MVP:** Hard-code user_id w middleware, pomiń formularz logowania (zaoszczędzi tydzień developmentu)
+
+### 7. Walidacja unikalności daty raportu
+**Wymaganie biznesowe:** Jeden raport na dzień
+
+**Pytanie implementacyjne:**
+- Czy zablokować tworzenie drugiego raportu na ten sam dzień (constraint w DB)?
+- Czy przekierować do edycji istniejącego raportu?
+- Czy pozwolić na overwrite?
+
+**Rekomendacja:** Unique constraint (user_id, date), w UI sprawdzanie przed zapisem i komunikat "Raport na ten dzień już istnieje. Przejdź do edycji."
+
+### 8. Predefiniowane listy - zarządzanie
+**Aktualne:** Listy symptomów i działań niepożądanych są predefiniowane
+
+**Pytania:**
+- Czy pozwolić użytkownikowi dodawać własne pozycje do list? (opcja była w rekomendacji)
+- Jeśli tak, czy zapisywać je jako custom entries w osobnej tabeli?
+- Czy po wybraniu "Inne" zapisywać ten custom text do późniejszego wykorzystania?
+
+**Rekomendacja:** Na MVP tylko predefiniowane + pole "Inne" z free text (nie zapisuj do stałej listy). Custom entries można dodać post-MVP.
+
+---
+
+**Następny krok:** Utworzenie pełnego dokumentu PRD z powyższymi ustaleniami, wraz z wireframes, user flows i technical specifications.
