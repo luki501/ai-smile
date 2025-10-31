@@ -47,3 +47,56 @@ export type SymptomDetailsDto = Symptom;
 export type UserDeletionResponseDto = {
 	message: string;
 };
+
+// ============================================================================
+// Report Types
+// ============================================================================
+
+/**
+ * Union type representing valid period types for report generation.
+ * These correspond to the analysis periods supported by the report generation system.
+ */
+export type PeriodType = 'week' | 'month' | 'quarter';
+
+/**
+ * Represents the shape of a report record as it is stored in the database.
+ * This is the base type from which all other report-related DTOs and command models are derived.
+ */
+export type Report = Database['public']['Tables']['reports']['Row'];
+
+/**
+ * Represents the shape of a report record for an insert operation.
+ * Used internally when creating new reports in the database.
+ */
+export type ReportInsert = Database['public']['Tables']['reports']['Insert'];
+
+/**
+ * Command model for generating a new AI-powered symptom analysis report.
+ * The user only needs to specify the period type (week, month, or quarter).
+ * Other fields such as period_start, period_end, user_id, and content are calculated
+ * and populated server-side during the report generation process.
+ */
+export type CreateReportCommand = {
+	period_type: PeriodType;
+};
+
+/**
+ * Data Transfer Object for representing a single report in API responses.
+ * This type includes all fields from the database entity and is returned by:
+ * - POST /api/reports (after report generation)
+ * - GET /api/reports/{id} (single report retrieval)
+ * - GET /api/reports (as items in the data array)
+ */
+export type ReportDto = Report;
+
+/**
+ * Data Transfer Object for the response of a paginated report list.
+ * Used by GET /api/reports to return multiple reports with pagination metadata.
+ * 
+ * @property data - Array of report objects matching the query criteria
+ * @property count - Total number of reports available (for pagination)
+ */
+export type ReportListResponseDto = {
+	data: ReportDto[];
+	count: number;
+};

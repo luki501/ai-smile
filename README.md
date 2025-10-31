@@ -50,21 +50,33 @@ To set up and run the project on your local machine, follow these steps.
     ```
 
 3.  **Set up environment variables:**
-    Create a `.env` file in the root of the project by copying the example file:
+    Create a `.env` file in the root of the project:
     ```bash
-    cp .env.example .env
+    touch .env
     ```
-    Open the new `.env` file and add your Supabase project URL and Anon Key. You can get these from your Supabase project dashboard.
+    Open the `.env` file and add the following environment variables:
     ```env
+    # Supabase Configuration
     PUBLIC_SUPABASE_URL="your-supabase-url"
     PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+    
+    # OpenRouter AI Configuration (required for AI reports)
+    OPENROUTER_API_KEY="your-openrouter-api-key"
+    
+    # Optional: Development auto-authentication
+    DEV_USER_EMAIL="your-dev-email@example.com"
+    DEV_USER_PASSWORD="your-dev-password"
     ```
+    
+    **Where to get the keys:**
+    - Supabase keys: [Supabase Dashboard](https://supabase.com/dashboard) → Your Project → Settings → API
+    - OpenRouter API key: [OpenRouter Keys](https://openrouter.ai/keys)
 
 4.  **Run the development server:**
     ```bash
     npm run dev
     ```
-    The application should now be running on [http://localhost:4321](http://localhost:4321).
+    The application should now be running on [http://localhost:3000](http://localhost:3000).
 
 ## Available Scripts
 
@@ -87,6 +99,7 @@ The initial version of the application focuses on core functionalities:
 -   **Symptom CRUD:** Full create, read, update, and delete operations for symptom entries.
 -   **Chronological Sorting:** Symptoms are displayed in a timeline, from newest to oldest.
 -   **Data Filtering:** Filter symptoms by date range, symptom type, and body part.
+-   **AI-Powered Reports:** Generate intelligent symptom analysis reports for weekly, monthly, or quarterly periods with trend analysis and comparisons.
 -   **Responsive Web App:** A fully functional web application accessible from any modern browser.
 
 ### Future Features (Post-MVP)

@@ -156,6 +156,8 @@
 
 ### Report Endpoints
 
+> **Implementation Status**: ✅ `POST /api/reports` implemented (2025-10-31)
+
 #### `POST /api/reports`
 
 - **Description**: Generates a new AI-powered symptom analysis report for the authenticated user based on a specified time period. The report includes symptom summaries, trend analysis, comparisons with the previous period, and identification of new symptoms. The generated report is saved to the database for future reference.
