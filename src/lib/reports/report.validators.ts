@@ -48,3 +48,11 @@ export const ReportQueryParamsSchema = z.object({
  * Represents validated and type-safe query parameters.
  */
 export type ReportQueryParams = z.infer<typeof ReportQueryParamsSchema>;
+
+/**
+ * Zod schema for validating report ID URL parameter.
+ * Coerces string from URL to number and validates as positive integer.
+ */
+export const reportIdSchema = z.coerce.number().int().positive({
+	message: 'Report ID must be a positive integer',
+});

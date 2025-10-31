@@ -159,6 +159,7 @@
 > **Implementation Status**: 
 > - ✅ `POST /api/reports` implemented (2025-10-31)
 > - ✅ `GET /api/reports` implemented (2025-10-31)
+> - ✅ `GET /api/reports/{id}` implemented (2025-10-31)
 
 #### `POST /api/reports`
 
@@ -227,9 +228,9 @@
 
 #### `GET /api/reports/{id}`
 
-- **Description**: Retrieves a specific report by ID for the authenticated user.
+- **Description**: Retrieves a specific report by ID for the authenticated user. The endpoint includes comprehensive validation and authorization checks to ensure users can only access their own reports.
 - **URL Parameters**:
-  - `id` (number, required): The ID of the report to retrieve.
+  - `id` (number, required): The ID of the report to retrieve. Must be a positive integer.
 - **Request Payload**: N/A
 - **Response Payload**:
   ```json
@@ -245,9 +246,11 @@
   ```
 - **Success Response**: `200 OK`
 - **Error Responses**:
+  - `400 Bad Request`: Invalid report ID format (e.g., non-numeric, negative, or decimal values).
   - `401 Unauthorized`: User is not authenticated.
-  - `403 Forbidden`: User does not have permission to access this report.
+  - `403 Forbidden`: User does not have permission to access this report (report belongs to another user).
   - `404 Not Found`: Report with the given ID does not exist.
+  - `500 Internal Server Error`: Unexpected server error during report retrieval.
 
 ---
 
@@ -338,7 +341,8 @@
 ## 6. Performance and Scalability Considerations
 
 - **Database Indexes**: The following indexes optimize report-related queries:
-  - `reports_user_id_created_at_idx`: Speeds up retrieval of user reports sorted by date.
+  - `reports_user_id_created_at_idx`: Speeds up retrieval of user reports sorted by date (used by GET /api/reports).
+  - `idx_reports_user_id_id`: Composite index for efficient single report retrieval with authorization check (used by GET /api/reports/{id}).
   - `reports_period_idx`: Optimizes queries filtering reports by time periods.
   - `symptoms_user_id_occurred_at_idx`: Essential for efficient symptom data retrieval during report generation.
 - **Caching Strategy**: 

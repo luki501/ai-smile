@@ -366,6 +366,71 @@ export async function generateReport(
 }
 
 /**
+ * Retrieves a single report by ID for a specific user.
+ * Includes authorization check by filtering on user_id.
+ *
+ * @param supabase - Supabase client instance
+ * @param reportId - The ID of the report to retrieve
+ * @param userId - The ID of the authenticated user
+ * @returns The report if found and owned by user, null otherwise
+ * @throws Error if database query fails
+ */
+export async function getReportById(
+	supabase: SupabaseClient,
+	reportId: number,
+	userId: string,
+): Promise<Report | null> {
+	const { data, error } = await supabase
+		.from('reports')
+		.select('*')
+		.eq('id', reportId)
+		.eq('user_id', userId)
+		.single();
+
+	if (error) {
+		// Supabase returns PGRST116 error for not found
+		if (error.code === 'PGRST116') {
+			return null;
+		}
+		console.error('Failed to fetch report:', error);
+		throw new Error(`Failed to fetch report: ${error.message}`);
+	}
+
+	return data;
+}
+
+/**
+ * Checks if a report exists in the database (regardless of ownership).
+ * Used to differentiate between 403 Forbidden and 404 Not Found.
+ *
+ * @param supabase - Supabase client instance
+ * @param reportId - The ID of the report to check
+ * @returns True if report exists, false otherwise
+ * @throws Error if database query fails
+ */
+export async function checkReportExists(
+	supabase: SupabaseClient,
+	reportId: number,
+): Promise<boolean> {
+	const { data, error } = await supabase
+		.from('reports')
+		.select('id')
+		.eq('id', reportId)
+		.single();
+
+	if (error) {
+		// PGRST116 means not found, which is expected
+		if (error.code === 'PGRST116') {
+			return false;
+		}
+		console.error('Failed to check report existence:', error);
+		throw new Error(`Failed to check report existence: ${error.message}`);
+	}
+
+	return !!data;
+}
+
+/**
  * Fetches a paginated list of reports for a specific user.
  * Reports are sorted by creation date (newest first) and can be optionally filtered by period type.
  *
